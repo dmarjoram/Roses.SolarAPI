@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:12662",
+      "sslPort": 0
+    }
+  },
+  "profiles": {
+    "Roses.SolarAPI": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:5054",
+      "dotnetRunMessages": true
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
+      "environmentVariables": {
+        "SOLARCONFIGURATION__LON": "-2.511730",
+        "SOLARCONFIGURATION__AZ": "167",
+        "SOLARCONFIGURATION__APIKEY": "addme",
+        "SOLARCONFIGURATION__LAT": "53.230236",
+        "SOLARCONFIGURATION__DEC": "45",
+        "SOLARCONFIGURATION__KWP": "5.4"
+      },
+      "publishAllPorts": true
+    }
+  }
+}
