@@ -33,7 +33,7 @@ namespace Roses.SolarAPI.Services
                 response = await client.GetFromJsonAsync<Forecast>(requestUri, ct) ?? new();
 
                 MemoryCacheEntryOptions cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromHours(_config.IntervalHours));
+                    .SetAbsoluteExpiration(TimeSpan.FromHours(_config.IntervalHours / 2d));
 
                 _logger.LogInformation("Got response. Adding to memory cache.");
 
