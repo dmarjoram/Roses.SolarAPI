@@ -7,7 +7,7 @@ using System.Net;
 
 namespace Roses.SolarAPI.Services
 {
-    public class FoxESSService
+    public partial class FoxESSService
     {
         private readonly IMemoryCache _memoryCache;
         private readonly ILogger<FoxESSService> _logger;

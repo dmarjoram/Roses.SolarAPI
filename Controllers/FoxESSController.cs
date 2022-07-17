@@ -21,21 +21,21 @@ namespace Roses.SolarAPI.Controllers
         }
 
         [HttpGet]
-        [Route("BatteryConfiguration")]
+        [Route("Local/BatteryConfiguration")]
         public BatteryConfiguration GetBatteryConfiguration(CancellationToken ct)
         {
             return _foxESSService.GetBatteryConfiguration();
         }
 
         [HttpPost]
-        [Route("ForceChargeForTodayTimePeriod1")]
+        [Route("Local/ForceChargeForTodayTimePeriod1")]
         public Task ForceChargeForTodayTimePeriod1(CancellationToken ct)
         {
             return _foxESSService.ForceChargeForTodayTimePeriod1(ct);
         }
 
         [HttpPost]
-        [Route("DisableForceChargeTimePeriod1")]
+        [Route("Local/DisableForceChargeTimePeriod1")]
         public Task DisableForceChargeTimePeriod1(CancellationToken ct)
         {
             return _foxESSService.DisableForceChargeTimePeriod1(ct);
