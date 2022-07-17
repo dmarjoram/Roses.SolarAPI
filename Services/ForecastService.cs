@@ -10,21 +10,32 @@ namespace Roses.SolarAPI.Services
 
         private readonly IMemoryCache _memoryCache;
         private readonly ILogger<ForecastService> _logger;
-        private readonly SolarConfiguration _config;
+        private readonly SolarConfiguration? _config;
         private const string ForecastCacheKeyPrefix = "Forecast";
+        private bool _initalised = false;
 
         public ForecastService(ILogger<ForecastService> logger, IMemoryCache memoryCache, IConfiguration configuration)
         {
             _logger = logger;
             _memoryCache = memoryCache;
             _config = configuration.GetSection(nameof(SolarConfiguration)).Get<SolarConfiguration>();
-        }
+
+            if (_config == null)
+            {
+                _logger.LogWarning($"{nameof(SolarConfiguration)} is not specified. Forecast.Solar integration not enabled.");
+                return;
+            }
+
+            _initalised = true;
+    }
 
         public async Task<Forecast> Estimate(CancellationToken ct)
         {
+            AssertConfigured();
+
             HttpClient client = new HttpClient();
 
-            string requestUri = _config.GenerateRequestUri(ESTIMATE_API_URI);
+            string requestUri = _config!.GenerateRequestUri(ESTIMATE_API_URI);
 
             if (!_memoryCache.TryGetValue($"{ForecastCacheKeyPrefix}:{requestUri}", out Forecast response))
             {
@@ -45,6 +56,14 @@ namespace Roses.SolarAPI.Services
             }
 
             return response;
+        }
+
+        private void AssertConfigured()
+        {
+            if (!_initalised)
+            {
+                throw new InvalidOperationException("The solar configuration for the Forecast.Solar intergration is not correctly configured.");
+            }
         }
     }
 }

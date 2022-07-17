@@ -9,6 +9,7 @@ builder.Configuration.AddEnvironmentVariables();
 // Add services to the container.
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ForecastService>();
+builder.Services.AddSingleton<FoxESSService>();
 
 builder.Services.AddControllers();
 

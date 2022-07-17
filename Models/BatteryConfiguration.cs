@@ -1,4 +1,4 @@
-namespace Roses.SolarAPI
+namespace Roses.SolarAPI.Models
 {
     public class BatteryConfiguration
     {
