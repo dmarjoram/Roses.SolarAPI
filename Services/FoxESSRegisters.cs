@@ -35,11 +35,11 @@
         /// <summary>
         /// Minimum battery state of charge. Minimum value 10.
         /// </summary>
-        BATTERY_MIN_SOC = 41009,
+        BATTERY_MIN_SOC_RW = 41009,
 
         /// <summary>
         /// Minimum battery state of when on grid. Minimum value 10.
         /// </summary>
-        BATTERY_MIN_SOC_ON_GRID = 41011,
+        BATTERY_MIN_SOC_ON_GRID_RW = 41011,
     }
 }

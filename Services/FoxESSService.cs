@@ -58,11 +58,11 @@ namespace Roses.SolarAPI.Services
 
                     // Read min SOC
                     short minSocValue = includeSoc ? client.ReadHoldingRegisters<short>(_config.DeviceId,
-                        (int)FoxESSRegisters.BATTERY_MIN_SOC, 1).ToArray().FirstOrDefault() : (short)0;
+                        (int)FoxESSRegisters.BATTERY_MIN_SOC_RW, 1).ToArray().FirstOrDefault() : (short)0;
 
                     // Read min SOC (on grid)
                     short minSocOnGridValue = includeSoc ? client.ReadHoldingRegisters<short>(_config.DeviceId,
-                        (int)FoxESSRegisters.BATTERY_MIN_SOC_ON_GRID, 1).ToArray().FirstOrDefault() : (short)0;
+                        (int)FoxESSRegisters.BATTERY_MIN_SOC_ON_GRID_RW, 1).ToArray().FirstOrDefault() : (short)0;
 
                     client.Disconnect();
 
