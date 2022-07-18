@@ -1,17 +1,41 @@
-﻿using System.Text.Json.Serialization;
+﻿using Roses.SolarAPI.Extensions;
+using System.Text.Json.Serialization;
 
 namespace Roses.SolarAPI.Models.FoxCloud
 {
     /// <summary>
     /// POST body request for https://www.foxesscloud.com/c/v0/device/battery/time/set
     /// </summary>
-    public class SetBatteryChargeTimesRequest
+    public class SetBatteryChargeTimesRequest : IFoxRequest
     {
         [JsonPropertyName("sn")]
         public string? Sn { get; set; }
 
         [JsonPropertyName("times")]
         public Time[]? Times { get; set; }
+
+        /// <summary>
+        /// Validate the request parameters
+        /// </summary>
+        public void Validate()
+        {
+            if (string.IsNullOrWhiteSpace(Sn))
+            {
+                throw new ArgumentNullException(nameof(SetBatteryChargeTimesRequest), "No serial number is provided.");
+            }
+
+            if (Times!.Any(time => time!.StartTime!.ToTimeOnly() > time!.EndTime!.ToTimeOnly()))
+            {
+                throw new ArgumentOutOfRangeException(nameof(SetBatteryChargeTimesRequest), "Start time is after end time.");
+            }
+
+            TimeOnly defaultTime = new TimeOnly(0, 0);
+
+            if (Times!.Any(time => time.EnableCharge && (time.StartTime!.ToTimeOnly() == defaultTime || time.EndTime!.ToTimeOnly() == defaultTime)))
+            {
+                throw new ArgumentOutOfRangeException(nameof(SetBatteryChargeTimesRequest), "Charge can't be enabled with start time or end time of 00:00.");
+            }
+        }
     }
 
     public class EndTime

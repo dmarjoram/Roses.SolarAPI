@@ -100,38 +100,46 @@ namespace Roses.SolarAPI.Services
             return response;
         }
 
-        public Task ForceChargeForTodayTimePeriod1(CancellationToken ct = default)
+        public async Task<string> ForceChargeForTodayTimePeriod1(CancellationToken ct = default)
         {
             TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
             TimeOnly end = new TimeOnly(23, 59);
 
-            return WriteSingleRegisters(ct,
+            await WriteSingleRegisters(ct,
                 (FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, now.ToFoxESSRegister()),
                 (FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, end.ToFoxESSRegister()));
+
+            return FoxErrorNumber.OK.ToString();
         }
 
-        public Task ForceChargeForTodayTimePeriod2(CancellationToken ct = default)
+        public async Task<string> ForceChargeForTodayTimePeriod2(CancellationToken ct = default)
         {
             TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
             TimeOnly end = new TimeOnly(23, 59);
 
-            return WriteSingleRegisters(ct,
+            await WriteSingleRegisters(ct,
                 (FoxESSRegisters.BATTERY_TIMEPERIOD2_START_TIME, now.ToFoxESSRegister()),
                 (FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, end.ToFoxESSRegister()));
+
+            return FoxErrorNumber.OK.ToString();
         }
 
-        public Task DisableForceChargeTimePeriod1(CancellationToken ct = default)
+        public async Task<string> DisableForceChargeTimePeriod1(CancellationToken ct = default)
         {
-            return WriteSingleRegisters(ct,
+            await WriteSingleRegisters(ct,
                 (FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, 0),
                 (FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, 0));
+
+            return FoxErrorNumber.OK.ToString();
         }
 
-        public Task DisableForceChargeTimePeriod2(CancellationToken ct = default)
+        public async Task<string> DisableForceChargeTimePeriod2(CancellationToken ct = default)
         {
-            return WriteSingleRegisters(ct,
+            await WriteSingleRegisters(ct,
                 (FoxESSRegisters.BATTERY_TIMEPERIOD2_START_TIME, 0),
                 (FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, 0));
+
+            return FoxErrorNumber.OK.ToString();
         }
 
         /// <summary>

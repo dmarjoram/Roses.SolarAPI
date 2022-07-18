@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Roses.SolarAPI.Services;
+using System.Text.Json.Serialization;
 
 namespace Roses.SolarAPI.Models.FoxCloud
 {
@@ -14,10 +15,10 @@ namespace Roses.SolarAPI.Models.FoxCloud
         public string? User { get; set; }
     }
 
-    public class LoginResponse
+    public class LoginResponse : IFoxResponse
     {
         [JsonPropertyName("errno")]
-        public int Errno { get; set; }
+        public int Errno { get; set; } = (int)FoxErrorNumber.NoResponse;
 
         [JsonPropertyName("result")]
         public Result? Result { get; set; }
