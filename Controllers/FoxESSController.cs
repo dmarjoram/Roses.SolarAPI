@@ -3,6 +3,7 @@ using Roses.SolarAPI.Configuration;
 using Roses.SolarAPI.Models;
 using Roses.SolarAPI.Models.FoxCloud;
 using Roses.SolarAPI.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace Roses.SolarAPI.Controllers
 {
@@ -29,24 +30,43 @@ namespace Roses.SolarAPI.Controllers
         }
 
         [HttpPost]
-        [Route("Local/ForceChargeForTodayTimePeriod1")]
-        public async Task<ApiResult> ForceChargeForTodayTimePeriod1(CancellationToken ct)
+        [Route("Local/SetBatteryMinSoC")]
+        public async Task<ApiResult> SetBatteryMinSoC(CancellationToken ct = default, [FromQuery][Required] ushort percentage = 10)
         {
-            return new ApiResult()
-            {
-                ResultCode = await _foxESSService.ForceChargeForTodayTimePeriod1(ct)
-            };
+            return new ApiResult() { ResultCode = await _foxESSService.SetBatteryMinSoC(percentage, ct) };
         }
 
         [HttpPost]
-        [Route("Local/DisableForceChargeTimePeriod1")]
-        public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
+        [Route("Local/SetBatteryMinGridSoC")]
+        public async Task<ApiResult> SetBatteryMinGridSoC(CancellationToken ct = default, [FromQuery][Required] ushort percentage = 10)
+        {
+            return new ApiResult() { ResultCode = await _foxESSService.SetBatteryMinGridSoC(percentage, ct) };
+        }
+
+        [HttpPost]
+        [Route("Local/SetBothBatteryMinSoC")]
+        public async Task<ApiResult> SetBothBatteryMinSoC(CancellationToken ct, [FromQuery][Required] ushort minSoc = 10, [FromQuery][Required] ushort minSocGrid = 10)
         {
             return new ApiResult()
             {
-                ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
+                ResultCode = await _foxESSService.SetBothBatteryMinSoC(new Models.Local.SetBothBatteryMinSoCRequest()
+                {
+                    MinSoc = minSoc,
+                    MinGridSoc = minSocGrid
+                }
+                , ct)
             };
         }
+
+        //[HttpPost]
+        //[Route("Local/DisableForceChargeTimePeriod1")]
+        //public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
+        //{
+        //    return new ApiResult()
+        //    {
+        //        ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
+        //    };
+        //}
 
         [HttpPost]
         [Route("Cloud/ForceChargeForTodayTimePeriod1")]
@@ -68,11 +88,21 @@ namespace Roses.SolarAPI.Controllers
             };
         }
 
+        [HttpPost]
+        [Route("Cloud/SetBothBatteryMinSoC")]
+        public async Task<ApiResult> FoxCloudSetBothBatteryMinSoC(CancellationToken ct, [FromQuery][Required] ushort minSoc = 10, [FromQuery][Required] ushort minSocGrid = 10)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.FoxCloudSetBothBatteryMinSoC(minSoc, minSocGrid, ct)
+            };
+        }
+
         [HttpGet]
         [Route("Cloud/DeviceList")]
         public Task<Device[]> GetDeviceList(CancellationToken ct)
         {
-            return _foxESSService.GetDeviceList(ct);
+            return _foxESSService.FoxCloudGetDeviceList(ct);
         }
 
         /// <summary>

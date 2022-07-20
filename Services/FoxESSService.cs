@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Roses.SolarAPI.Configuration;
 using Roses.SolarAPI.Extensions;
 using Roses.SolarAPI.Models;
+using Roses.SolarAPI.Models.Local;
 using System.Net;
 
 namespace Roses.SolarAPI.Services
@@ -98,6 +99,35 @@ namespace Roses.SolarAPI.Services
             }
 
             return response;
+        }
+
+        public async Task<string> SetBatteryMinSoC(ushort percentage, CancellationToken ct = default)
+        {
+            new SetBothBatteryMinSoCRequest() { MinSoc = percentage }.Validate();
+
+            await WriteSingleRegister((FoxESSRegisters.BATTERY_MIN_SOC_RW, (short)percentage), ct);
+
+            return FoxErrorNumber.OK.ToString();
+        }
+
+        public async Task<string> SetBatteryMinGridSoC(ushort percentage, CancellationToken ct = default)
+        {
+            new SetBothBatteryMinSoCRequest() { MinGridSoc = percentage }.Validate();
+
+            await WriteSingleRegister((FoxESSRegisters.BATTERY_MIN_SOC_ON_GRID_RW, (short)percentage), ct);
+
+            return FoxErrorNumber.OK.ToString();
+        }
+
+        public async Task<string> SetBothBatteryMinSoC(SetBothBatteryMinSoCRequest request, CancellationToken ct = default)
+        {
+            request.Validate();
+
+            await WriteSingleRegisters(ct,
+                (FoxESSRegisters.BATTERY_MIN_SOC_RW, (short)request?.MinSoc!),
+                (FoxESSRegisters.BATTERY_MIN_SOC_ON_GRID_RW, (short)request?.MinGridSoc!));
+
+            return FoxErrorNumber.OK.ToString();
         }
 
         public async Task<string> ForceChargeForTodayTimePeriod1(CancellationToken ct = default)

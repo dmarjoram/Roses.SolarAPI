@@ -2,7 +2,7 @@
 
 namespace Roses.SolarAPI.Models.FoxCloud
 {
-    public partial class DeviceListRequest
+    public partial class DeviceListRequest : IFoxRequest    
     {
         [JsonPropertyName("pageSize")]
         public int PageSize { get; set; } = 10;
@@ -15,6 +15,16 @@ namespace Roses.SolarAPI.Models.FoxCloud
 
         [JsonPropertyName("condition")]
         public Condition Condition { get; set; } = new Condition();
+
+        [JsonIgnore]
+        public string RequestUri => DeviceListUri;
+
+        public void Validate()
+        {
+            // Nothing to do here
+        }
+
+        private const string DeviceListUri = "https://www.foxesscloud.com/c/v0/device/list";
     }
 
     public partial class Condition

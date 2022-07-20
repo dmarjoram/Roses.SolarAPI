@@ -13,6 +13,9 @@ namespace Roses.SolarAPI.Models.FoxCloud
         [JsonPropertyName("values")]
         public Values? Values { get; set; } = new Values();
 
+        [JsonIgnore]
+        public string RequestUri => SetWorkModeUri;
+
         public void Validate()
         {
             if (Id == Guid.Empty)
@@ -30,6 +33,8 @@ namespace Roses.SolarAPI.Models.FoxCloud
                 throw new ArgumentOutOfRangeException(nameof(SetWorkModeRequest), "A valid work mode has not been provided.");
             }
         }
+
+        private const string SetWorkModeUri = "https://www.foxesscloud.com/c/v0/device/setting/set";
     }
 
     public partial class Values
