@@ -14,6 +14,9 @@ namespace Roses.SolarAPI.Models.FoxCloud
         [JsonPropertyName("times")]
         public Time[]? Times { get; set; }
 
+        [JsonIgnore]
+        public string RequestUri => SetBatteryChargeTimesUri;
+
         /// <summary>
         /// Validate the request parameters
         /// </summary>
@@ -36,6 +39,8 @@ namespace Roses.SolarAPI.Models.FoxCloud
                 throw new ArgumentOutOfRangeException(nameof(SetBatteryChargeTimesRequest), "Charge can't be enabled with start time or end time of 00:00.");
             }
         }
+
+        private const string SetBatteryChargeTimesUri = "https://www.foxesscloud.com/c/v0/device/battery/time/set";
     }
 
     public class EndTime

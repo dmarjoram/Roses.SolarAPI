@@ -13,6 +13,9 @@ namespace Roses.SolarAPI.Models.FoxCloud
         [JsonPropertyName("password")]
         public string? Password { get; set; }
 
+        [JsonIgnore]
+        public string RequestUri => FoxCloudLoginUri;
+
         /// <summary>
         /// Validate the request parameters
         /// </summary>
@@ -28,5 +31,7 @@ namespace Roses.SolarAPI.Models.FoxCloud
                 throw new ArgumentNullException(nameof(LoginRequest), "No MD5 password hash is provided.");
             }
         }
+
+        private const string FoxCloudLoginUri = "https://www.foxesscloud.com/c/v0/user/login";
     }
 }

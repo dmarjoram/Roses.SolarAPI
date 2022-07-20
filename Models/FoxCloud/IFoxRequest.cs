@@ -3,5 +3,7 @@
     public interface IFoxRequest
     {
         public void Validate();
+
+        public string RequestUri { get; }
     }
 }
