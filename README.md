@@ -38,9 +38,26 @@ Work Mode
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/FeedIn`
 
-### Using modbus
+Set both battery minimum state of charge values at once
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Cloud/SetBothBatteryMinSoC?minSoc=10&minSocGrid=10`
+
+### Using modbus TCP
 Query battery status using RS485 device
+
 `GET http://dockerhost-ip:mappedport/FoxEss/Local/BatteryConfiguration`
+
+Set battery minimum state of charge
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinSoC?percentage=10`
+
+Set battery minimum state of charge when on-grid
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage=10`
+
+Set both battery minimum state of charge values at once
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/SetBothBatteryMinSoC?minSoc=10&minSocGrid=10`
 
 # Home Assistant
 ### configuration.yml
