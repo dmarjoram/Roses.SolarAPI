@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Roses.SolarAPI.Models.FoxCloud
 {
-    public class Result
+    public class LoginResult
     {
         [JsonPropertyName("token")]
         public string? Token { get; set; }
@@ -21,6 +21,6 @@ namespace Roses.SolarAPI.Models.FoxCloud
         public int Errno { get; set; } = (int)FoxErrorNumber.NoResponse;
 
         [JsonPropertyName("result")]
-        public Result? Result { get; set; }
+        public LoginResult? Result { get; set; }
     }
 }
