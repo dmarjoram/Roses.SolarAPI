@@ -8,16 +8,63 @@ namespace Roses.SolarAPI.Services
     public partial class FoxESSService
     {
         private const string FoxCloudTokenPrefix = "FoxCloudToken";
+        private const string FoxCloudDeviceListPrefix = "FoxCloudDeviceList";
+
         private const string SetBatteryChargeTimesUri = "https://www.foxesscloud.com/c/v0/device/battery/time/set";
         private const string FoxCloudLoginUri = "https://www.foxesscloud.com/c/v0/user/login";
+        private const string DeviceListUri = "https://www.foxesscloud.com/c/v0/device/list";
+        private const string SetWorkModeUri = "https://www.foxesscloud.com/c/v0/device/setting/set";
 
         private const int FoxCloudRetryDelayMilliseconds = 5000;
+        private const int FoxDeviceListCacheHours = 1;
+
+        public async Task<Device[]> GetDeviceList(CancellationToken ct)
+        {
+            if (_memoryCache.TryGetValue($"{FoxCloudDeviceListPrefix}:{_config!.Username}", out Device[] deviceList))
+            {
+                _logger.LogInformation("FoxCloud device list returned from cache.");
+                return deviceList;
+            }
+
+            DeviceListRequest request = new DeviceListRequest();
+
+            Func<Task<DeviceListResponse>> sendRequest = async () =>
+            {
+                // Add FoxCloud SPA access token to request
+                HttpClient client = new HttpClient();
+
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add("Token", await FoxCloudLogin(ct));
+
+                _logger.LogInformation("Sending request to FoxCloud of type {request}", request);
+
+                HttpResponseMessage response = await client.PostAsJsonAsync(DeviceListUri, request, cancellationToken: ct);
+                response.EnsureSuccessStatusCode();
+
+                return (await response.Content.ReadFromJsonAsync<DeviceListResponse>(cancellationToken: ct))!;
+            };
+
+            DeviceListResponse responseBody = new();
+
+            responseBody = await SendWithRetryAsync(sendRequest, responseBody, ct);
+
+            _logger.LogInformation("Device list retrieved via FoxCloud.");
+
+            deviceList = responseBody.Result?.Devices!;
+
+            MemoryCacheEntryOptions cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromHours(FoxDeviceListCacheHours));
+
+            _memoryCache.Set($"{FoxCloudDeviceListPrefix}:{_config!.Username}", deviceList, cacheEntryOptions);
+
+            return deviceList!;
+        }
 
         public async Task<string> FoxCloudDisableForceChargeTimePeriod1(CancellationToken ct = default)
         {
             SetBatteryChargeTimesRequest request = new SetBatteryChargeTimesRequest()
             {
-                Sn = _config!.SerialNumber,
+                Sn = await ResolveSerialNumberAsync(ct),
                 Times = new Time[]
                 {
                     new Time() {
@@ -47,7 +94,7 @@ namespace Roses.SolarAPI.Services
 
             SetBatteryChargeTimesRequest request = new SetBatteryChargeTimesRequest()
             {
-                Sn = _config!.SerialNumber,
+                Sn = await ResolveSerialNumberAsync(ct),
                 Times = new Time[]
                 {
                     new Time() {
@@ -70,16 +117,91 @@ namespace Roses.SolarAPI.Services
             return (await SetBatteryChargeTimes(request, ct))!.ToFoxStatus()!.ToString();
         }
 
+        /// <summary>
+        /// Set inverter for feed-in
+        /// </summary>
+        public async Task<string> FoxCloudSetWorkModeFeedIn(CancellationToken ct = default)
+        {
+            SetWorkModeRequest request = new SetWorkModeRequest()
+            {
+                Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
+            };
+
+            request.Values!.Mode = WorkModes.FEED_IN;
+
+            return (await SetWorkMode(request, ct))!.ToFoxStatus()!.ToString();
+        }
+
+        /// <summary>
+        /// Set inverter for self-use
+        /// </summary>
+        public async Task<string> FoxCloudSetWorkModeSelfUse(CancellationToken ct = default)
+        {
+            SetWorkModeRequest request = new SetWorkModeRequest()
+            {
+                Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
+            };
+
+            request.Values!.Mode = WorkModes.SELF_USE;
+
+            return (await SetWorkMode(request, ct))!.ToFoxStatus()!.ToString();
+        }
+
+        /// <summary>
+        /// Set inverter for backup
+        /// </summary>
+        public async Task<string> FoxCloudSetWorkModeBackup(CancellationToken ct = default)
+        {
+            SetWorkModeRequest request = new SetWorkModeRequest()
+            {
+                Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
+            };
+
+            request.Values!.Mode = WorkModes.BACKUP;
+
+            return (await SetWorkMode(request, ct))!.ToFoxStatus()!.ToString();
+        }
+
+        private async Task<SetWorkModeResponse> SetWorkMode(SetWorkModeRequest request, CancellationToken ct)
+        {
+            // Perform some client validation before we contact FoxCloud
+            request.Validate();
+
+            Func<Task<SetWorkModeResponse>> sendRequest = async () =>
+            {
+                // Add FoxCloud SPA access token to request
+                HttpClient client = new HttpClient();
+
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Add("Token", await FoxCloudLogin(ct));
+
+                _logger.LogInformation("Sending request to FoxCloud of type {request}", request);
+
+                HttpResponseMessage response = await client.PostAsJsonAsync(SetWorkModeUri, request, cancellationToken: ct);
+                response.EnsureSuccessStatusCode();
+
+                return (await response.Content.ReadFromJsonAsync<SetWorkModeResponse>(cancellationToken: ct))!;
+            };
+
+            SetWorkModeResponse responseBody = new();
+
+            responseBody = await SendWithRetryAsync(sendRequest, responseBody, ct);
+
+            _logger.LogInformation("Work mode set successfully via FoxCloud.");
+
+            return responseBody!;
+        }
+
         private async Task<SetBatteryChargeTimesResponse> SetBatteryChargeTimes(SetBatteryChargeTimesRequest request, CancellationToken ct)
         {
             // Perform some client validation before we contact FoxCloud
             request.Validate();
 
-            HttpClient client = new HttpClient();
-
             Func<Task<SetBatteryChargeTimesResponse>> sendRequest = async () =>
             {
                 // Add FoxCloud SPA access token to request
+                HttpClient client = new HttpClient();
+
                 client.DefaultRequestHeaders.Clear();
                 client.DefaultRequestHeaders.Add("Token", await FoxCloudLogin(ct));
 
@@ -93,6 +215,18 @@ namespace Roses.SolarAPI.Services
 
             SetBatteryChargeTimesResponse responseBody = new();
 
+            responseBody = await SendWithRetryAsync(sendRequest, responseBody, ct);
+
+            _logger.LogInformation("Battery times set successfully via FoxCloud.");
+
+            return responseBody!;
+        }
+
+        /// <summary>
+        /// Helper method to handle timeouts and retry a FoxCloud call
+        /// </summary>
+        private async Task<TResponse> SendWithRetryAsync<TResponse>(Func<Task<TResponse>> sendRequest, TResponse responseBody, CancellationToken ct) where TResponse : IFoxResponse
+        {
             try
             {
                 responseBody = await sendRequest();
@@ -105,9 +239,7 @@ namespace Roses.SolarAPI.Services
                 responseBody = await CheckResponseAndRetry(sendRequest!, responseBody, ct);
             }
 
-            _logger.LogInformation("Battery times set successfully via FoxCloud.");
-
-            return responseBody!;
+            return responseBody;
         }
 
         /// <summary>
@@ -162,8 +294,6 @@ namespace Roses.SolarAPI.Services
                 return token;
             }
 
-            HttpClient client = new HttpClient();
-
             LoginRequest request = new LoginRequest()
             {
                 User = _config!.Username,
@@ -175,6 +305,7 @@ namespace Roses.SolarAPI.Services
 
             Func<Task<LoginResponse>> sendRequest = async () =>
             {
+                HttpClient client = new HttpClient();
                 HttpResponseMessage response = await client.PostAsJsonAsync(FoxCloudLoginUri, request, cancellationToken: ct);
                 response.EnsureSuccessStatusCode();
 
@@ -205,6 +336,30 @@ namespace Roses.SolarAPI.Services
             _memoryCache.Set($"{FoxCloudTokenPrefix}:{_config!.Username}", token, cacheEntryOptions);
 
             return token;
+        }
+
+        private async Task<string> ResolveSerialNumberAsync(CancellationToken ct)
+        {
+            if (_config!.SerialNumber == null)
+            {
+                _logger.LogWarning("No environment variable set for device serial number. Contacting FoxCloud to query first device on account.");
+
+                _config.SerialNumber = (await GetDeviceList(ct)).FirstOrDefault()?.DeviceSn;
+            }
+
+            return _config!.SerialNumber!;
+        }
+
+        private async Task<Guid?> ResolveCloudDeviceIdAsync(CancellationToken ct)
+        {
+            if (_config!.CloudDeviceId == null)
+            {
+                _logger.LogWarning("No environment variable set for cloud device ID. Contacting FoxCloud to query first device on account.");
+
+                _config.CloudDeviceId = (await GetDeviceList(ct)).FirstOrDefault()?.DeviceId;
+            }
+
+            return _config!.CloudDeviceId!;
         }
     }
 }

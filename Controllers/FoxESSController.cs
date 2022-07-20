@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Roses.SolarAPI.Configuration;
 using Roses.SolarAPI.Models;
+using Roses.SolarAPI.Models.FoxCloud;
 using Roses.SolarAPI.Services;
 
 namespace Roses.SolarAPI.Controllers
@@ -64,6 +65,52 @@ namespace Roses.SolarAPI.Controllers
             return new ApiResult()
             {
                 ResultCode = await _foxESSService.FoxCloudDisableForceChargeTimePeriod1(ct)
+            };
+        }
+
+        [HttpGet]
+        [Route("Cloud/DeviceList")]
+        public Task<Device[]> GetDeviceList(CancellationToken ct)
+        {
+            return _foxESSService.GetDeviceList(ct);
+        }
+
+        /// <summary>
+        /// Set inverter for feed-in
+        /// </summary>
+        [HttpPost]
+        [Route("Cloud/WorkMode/FeedIn")]
+        public async Task<ApiResult> FoxCloudSetWorkModeFeedIn(CancellationToken ct = default)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.FoxCloudSetWorkModeFeedIn(ct)
+            };
+        }
+
+        /// <summary>
+        /// Set inverter for self-use
+        /// </summary>
+        [HttpPost]
+        [Route("Cloud/WorkMode/SelfUse")]
+        public async Task<ApiResult> FoxCloudSetWorkModeSelfUse(CancellationToken ct = default)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.FoxCloudSetWorkModeSelfUse(ct)
+            };
+        }
+
+        /// <summary>
+        /// Set inverter for backup
+        /// </summary>
+        [HttpPost]
+        [Route("Cloud/WorkMode/Backup")]
+        public async Task<ApiResult> FoxCloudSetWorkModeBackup(CancellationToken ct = default)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.FoxCloudSetWorkModeBackup(ct)
             };
         }
     }

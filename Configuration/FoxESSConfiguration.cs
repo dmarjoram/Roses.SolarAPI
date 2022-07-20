@@ -17,5 +17,7 @@
         public string? Username { get; set; }
 
         public string? PasswordMD5Hash { get; set; }
+
+        public Guid? CloudDeviceId { get; set; }
     }
 }
