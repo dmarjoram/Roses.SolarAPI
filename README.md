@@ -3,6 +3,8 @@
 ### Docker
 docker pull drosedev/rosessolarapi
 
+https://hub.docker.com/repository/docker/drosedev/rosessolarapi
+
 | Environment Variable | Example | Description |
 |--|--|--|
 | FOXESSCONFIGURATION__IPADDRESS | addme | The IP address on the LAN for local USR device. Currently not used to set battery charging. |
