@@ -16,6 +16,8 @@ https://hub.docker.com/repository/docker/drosedev/rosessolarapi
 
 Internal to the container the service runs on port 80. You can map this internal port to whatever you want with bridged networking on your Docker host.
 
+Swagger UI for testing available at http://dockerhost-ip:mappedport/swagger/
+
 # Example calls 
 ### Using FoxCloud
 Force charge (stop discharge) but don't charge from grid (from now until 23:59)
