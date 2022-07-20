@@ -17,17 +17,23 @@ Internal to the container the service runs on port 80. You can map this internal
 # Example calls 
 ### Using FoxCloud
 Force charge (stop discharge) but don't charge from grid (from now until 23:59)
+
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/ForceChargeForTodayTimePeriod1?enableGridCharging=false`
 
 Force charge now from grid (from now until 23:59)
+
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/ForceChargeForTodayTimePeriod1?enableGridCharging=true`
 
 Stop force charging
+
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/DisableForceChargeTimePeriod1`
 
 Work Mode
+
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/SelfUse`
+
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/Backup`
+
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/FeedIn`
 
 ### Using modbus
