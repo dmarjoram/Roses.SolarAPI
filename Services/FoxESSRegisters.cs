@@ -3,6 +3,11 @@
     public enum FoxESSRegisters : ushort
     {
         /// <summary>
+        /// Current battery SOC
+        /// </summary>
+        BATTERY_SOC = 11036,
+
+        /// <summary>
         /// Time period 1 should charge from grid (0 = No, or 1 = Yes)
         /// </summary>
         BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID = 41001,

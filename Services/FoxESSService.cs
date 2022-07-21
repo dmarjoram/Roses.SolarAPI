@@ -101,6 +101,15 @@ namespace Roses.SolarAPI.Services
             return response;
         }
 
+        public async Task<string> SetBatteryMinGridSoCToCurrentSoc(CancellationToken ct = default)
+        {
+            bool success = await CopySingleRegister(
+                FoxESSRegisters.BATTERY_SOC, 
+                FoxESSRegisters.BATTERY_MIN_SOC_ON_GRID_RW, 10, 100, ct);
+
+            return success ? FoxErrorNumber.OK.ToString() : FoxErrorNumber.OutOfBounds.ToString();
+        }
+
         public async Task<string> SetBatteryMinSoC(ushort percentage, CancellationToken ct = default)
         {
             new SetBothBatteryMinSoCRequest() { MinSoc = percentage }.Validate();
@@ -204,6 +213,44 @@ namespace Roses.SolarAPI.Services
 
                     _logger.LogInformation("Successfully written {value} to register {register}.", update.Value, update.Register);
                 }
+            }
+            finally
+            {
+                client?.Disconnect();
+            }
+        }
+
+        /// <summary>
+        /// Read a register value and write it to a different register
+        /// </summary>
+        /// <param name="ct">cancellation token</param>
+        private async Task<bool> CopySingleRegister(FoxESSRegisters originRegister, FoxESSRegisters destinationRegister, short minValue = 10, short maxValue = 100, CancellationToken ct = default)
+        {
+            AssertConfigured();
+
+            ModbusTcpClient? client = null;
+            try
+            {
+                client = new ModbusTcpClient();
+
+                client.Connect(new IPEndPoint(IPAddress.Parse(_config!.IPAddress!), _config.Port), ModbusEndianness.BigEndian);
+
+                // Read min SOC (on grid)
+                short originalValue = client.ReadInputRegisters<short>(_config.DeviceId, (int)originRegister, 1).ToArray().FirstOrDefault();
+
+                if (originalValue < minValue || originalValue > maxValue)
+                {
+                    _logger.LogWarning("Read value was outside bounds. No write will be performed.");
+
+                    return false;
+                }
+
+                // Write new value
+                await client.WriteSingleRegisterAsync(_config.DeviceId, (int)destinationRegister, originalValue, ct);
+
+                _logger.LogInformation("Successfully copied value {originalValue} from {originRegister} to register {destinationRegister}.", originalValue, originRegister, destinationRegister);
+
+                return true;
             }
             finally
             {

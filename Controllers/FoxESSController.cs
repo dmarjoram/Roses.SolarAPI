@@ -30,6 +30,13 @@ namespace Roses.SolarAPI.Controllers
         }
 
         [HttpPost]
+        [Route("Local/SetBatteryMinGridSoCToCurrentSoc")]
+        public async Task<ApiResult> SetBatteryMinGridSoCToCurrentSoc(CancellationToken ct = default)
+        {
+            return new ApiResult() { ResultCode = await _foxESSService.SetBatteryMinGridSoCToCurrentSoc(ct) };
+        }
+
+        [HttpPost]
         [Route("Local/SetBatteryMinSoC")]
         public async Task<ApiResult> SetBatteryMinSoC(CancellationToken ct = default, [FromQuery][Required] ushort percentage = 10)
         {
