@@ -57,6 +57,10 @@ Set battery minimum state of charge when on-grid
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage=10`
 
+Hold current state of charge in battery (on-grid)
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoCToCurrentSoc`
+
 Set both battery minimum state of charge values at once
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Local/SetBothBatteryMinSoC?minSoc=10&minSocGrid=10`
@@ -64,10 +68,24 @@ Set both battery minimum state of charge values at once
 # Home Assistant
 ### configuration.yml
 
-    # Control of FOX ESS battery via Roses.SolarAPI (currently using FoxCloud)
+    # Control of FOX ESS battery via Roses.SolarAPI
         rest_command:
+          fox_modbus_hold_charge:
+            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoCToCurrentSoc
+            method: POST
+            headers:
+              accept: "application/json"
+              user-agent: 'Mozilla/5.0 {{ useragent }}'
+      
+          fox_modbus_allow_discharge:
+            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage=10
+            method: POST
+            headers:
+              accept: "application/json"
+              user-agent: 'Mozilla/5.0 {{ useragent }}'  
+
           fox_force_charge_now:
-            url: http://dockerhost-ip:mappedport/FoxESS/Cloud/ForceChargeForTodayTimePeriod1?enableGridCharging=false
+            url: http://dockerhost-ip:mappedport/FoxESS/Cloud/ForceChargeForTodayTimePeriod1?enableGridCharging=true
             method: POST
             headers:
               accept: "application/json"
@@ -100,18 +118,3 @@ Set both battery minimum state of charge values at once
             headers:
               accept: "application/json"
               user-agent: 'Mozilla/5.0 {{ useragent }}'
-
-          # If using the fine work at https://github.com/StealthChesnut/HA-FoxESS-Modbus to get sensor.battery_soc
-          fox_modbus_hold_charge:
-            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage={{states('sensor.battery_soc')}}
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'
-      
-          fox_modbus_allow_discharge:
-            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage=10
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'  
