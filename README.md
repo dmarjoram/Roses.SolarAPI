@@ -103,14 +103,14 @@ Set both battery minimum state of charge values at once
 
           # If using the fine work at https://github.com/StealthChesnut/HA-FoxESS-Modbus to get sensor.battery_soc
           fox_modbus_hold_charge:
-            url: http://192.168.0.5:8200/FoxESS/Local/SetBatteryMinGridSoC?percentage={{states('sensor.battery_soc')}}
+            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage={{states('sensor.battery_soc')}}
             method: POST
             headers:
               accept: "application/json"
               user-agent: 'Mozilla/5.0 {{ useragent }}'
       
           fox_modbus_allow_discharge:
-            url: http://192.168.0.5:8200/FoxESS/Local/SetBatteryMinGridSoC?percentage=10
+            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage=10
             method: POST
             headers:
               accept: "application/json"
