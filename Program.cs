@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Roses.SolarAPI.Exceptions;
 using Roses.SolarAPI.Serialization;
 using Roses.SolarAPI.Services;
 
@@ -11,7 +12,10 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ForecastService>();
 builder.Services.AddSingleton<FoxESSService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<HttpResponseExceptionFilter>();
+});
 
 // Support serialisation of TimeOnly in .NET 6
 builder.Services.Configure<JsonOptions>(options => options.JsonSerializerOptions.Converters.Add(new TimeOnlyConverter()));

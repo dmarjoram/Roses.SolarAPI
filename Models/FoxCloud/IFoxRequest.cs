@@ -2,8 +2,8 @@
 {
     public interface IFoxRequest
     {
-        public void Validate();
+        void Validate();
 
-        public string RequestUri { get; }
+        string RequestUri { get; }
     }
 }

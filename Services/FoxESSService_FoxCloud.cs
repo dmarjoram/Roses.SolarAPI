@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using Roses.SolarAPI.Exceptions;
 using Roses.SolarAPI.Extensions;
 using Roses.SolarAPI.Models.FoxCloud;
 using System.Net;
@@ -10,8 +11,13 @@ namespace Roses.SolarAPI.Services
         private const string FoxCloudTokenPrefix = "FoxCloudToken";
         private const string FoxCloudDeviceListPrefix = "FoxCloudDeviceList";
 
+        private const int FoxCloudRetryInvalidParamDelayMilliseconds = 500;
         private const int FoxCloudRetryDelayMilliseconds = 5000;
         private const int FoxDeviceListCacheHours = 1;
+
+        // Keep track of SPA key that works
+        public static string DefaultSpaKey = SpaKeys.DEFAULT;
+        public static int CurrentSpaKey = 0;
 
         /// <summary>
         /// Get device list for FoxCloud account
@@ -136,18 +142,11 @@ namespace Roses.SolarAPI.Services
         /// </summary>
         public async Task<string> FoxCloudSetWorkModeFeedIn(CancellationToken ct = default)
         {
-            SetWorkModeRequest request = new SetWorkModeRequest()
-            {
-                Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
-            };
-
-            request.Values!.Mode = WorkModes.FEED_IN;
-
-            string response = (await SendFoxCloudRequest<SetWorkModeRequest, SetWorkModeResponse>(request, ct))!.ToFoxStatus()!.ToString();
+            FoxErrorNumber responseCode = await SetWorkModeWithSpaKeyCheck(WorkModes.FEED_IN, ct);
 
             _logger.LogInformation("Work mode 'FeedIn' set successfully via FoxCloud.");
 
-            return response;
+            return responseCode.ToString();
         }
 
         /// <summary>
@@ -155,18 +154,11 @@ namespace Roses.SolarAPI.Services
         /// </summary>
         public async Task<string> FoxCloudSetWorkModeSelfUse(CancellationToken ct = default)
         {
-            SetWorkModeRequest request = new SetWorkModeRequest()
-            {
-                Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
-            };
-
-            request.Values!.Mode = WorkModes.SELF_USE;
-
-            string response = (await SendFoxCloudRequest<SetWorkModeRequest, SetWorkModeResponse>(request, ct))!.ToFoxStatus()!.ToString();
+            FoxErrorNumber responseCode = await SetWorkModeWithSpaKeyCheck(WorkModes.SELF_USE, ct);
 
             _logger.LogInformation("Work mode 'SelfUse' set successfully via FoxCloud.");
 
-            return response;
+            return responseCode.ToString();
         }
 
         /// <summary>
@@ -174,18 +166,11 @@ namespace Roses.SolarAPI.Services
         /// </summary>
         public async Task<string> FoxCloudSetWorkModeBackup(CancellationToken ct = default)
         {
-            SetWorkModeRequest request = new SetWorkModeRequest()
-            {
-                Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
-            };
-
-            request.Values!.Mode = WorkModes.BACKUP;
-
-            string response = (await SendFoxCloudRequest<SetWorkModeRequest, SetWorkModeResponse>(request, ct))!.ToFoxStatus()!.ToString();
+            FoxErrorNumber responseCode = await SetWorkModeWithSpaKeyCheck(WorkModes.BACKUP, ct);
 
             _logger.LogInformation("Work mode 'Backup' set successfully via FoxCloud.");
 
-            return response;
+            return responseCode.ToString();
         }
 
         /// <summary>
@@ -268,6 +253,14 @@ namespace Roses.SolarAPI.Services
 
                     await Task.Delay(FoxCloudRetryDelayMilliseconds / 2);
                 }
+                else if (responseBody.ToFoxStatus() == FoxErrorNumber.InvalidRequest)
+                {
+                    _logger.LogWarning($"Error calling FoxCloud as request is invalid. We will not retry with the same request parameters.");
+
+                    await Task.Delay(FoxCloudRetryInvalidParamDelayMilliseconds);
+
+                    return responseBody!;
+                }
                 else
                 {
                     _logger.LogWarning($"Error calling FoxCloud. Retrying in {FoxCloudRetryDelayMilliseconds} ms.");
@@ -279,7 +272,7 @@ namespace Roses.SolarAPI.Services
 
                 if (responseBody.ToFoxStatus() != FoxErrorNumber.OK)
                 {
-                    throw new WebException($"FoxCloud returned failure code {responseBody.Errno} ({responseBody.ToFoxStatus()}).");
+                    throw new FoxResponseException(responseBody.ToFoxStatus(), $"FoxCloud returned failure code {responseBody.Errno} ({responseBody.ToFoxStatus()}).");
                 }
             }
 
@@ -344,6 +337,36 @@ namespace Roses.SolarAPI.Services
             }
 
             return _config!.CloudDeviceId!;
+        }
+
+        private async Task<FoxErrorNumber> SetWorkModeWithSpaKeyCheck(string workMode, CancellationToken ct)
+        {
+            Func<Task<FoxErrorNumber>> sendRequest = async () =>
+            {
+                SetWorkModeRequest request = new SetWorkModeRequest(DefaultSpaKey, workMode)
+                {
+                    Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
+                };
+
+                return (await SendFoxCloudRequest<SetWorkModeRequest, SetWorkModeResponse>(request, ct))!.ToFoxStatus()!;
+            };
+
+            FoxErrorNumber responseCode = await sendRequest();
+
+            for (int i = 0; i < SpaKeys.ALL.Length; i++)
+            {
+                if (responseCode == FoxErrorNumber.InvalidRequest)
+                {
+                    // Try next SPA key
+                    DefaultSpaKey = SpaKeys.ALL[++CurrentSpaKey % SpaKeys.ALL.Length];
+
+                    _logger?.LogInformation("Trying next SPA key. {DefaultSpaKey}", DefaultSpaKey);
+
+                    responseCode = await sendRequest();
+                }
+            }
+
+            return responseCode;
         }
     }
 }
