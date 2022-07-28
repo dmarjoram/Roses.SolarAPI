@@ -4,11 +4,11 @@
 
 **AMD64**
 
-docker pull drosedev/rosessolarapi:1.2
+docker pull drosedev/rosessolarapi:1.3
 
 **Raspberry Pi**
 
-docker pull drosedev/rosessolarapi:1.2-bullseye-slim-arm32v7
+docker pull drosedev/rosessolarapi:1.3-bullseye-slim-arm32v7
 
 https://hub.docker.com/repository/docker/drosedev/rosessolarapi
 
