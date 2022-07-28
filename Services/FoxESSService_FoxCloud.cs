@@ -255,7 +255,7 @@ namespace Roses.SolarAPI.Services
                 }
                 else if (responseBody.ToFoxStatus() == FoxErrorNumber.InvalidRequest)
                 {
-                    _logger.LogWarning($"Error calling FoxCloud as request is invalid. We will not retry with the same request parameters.");
+                    _logger.LogWarning($"FoxCloud reports the request is invalid. We will not retry with the same request parameters.");
 
                     await Task.Delay(FoxCloudRetryInvalidParamDelayMilliseconds);
 
