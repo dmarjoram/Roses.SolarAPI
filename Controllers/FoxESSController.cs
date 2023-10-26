@@ -85,7 +85,17 @@ namespace Roses.SolarAPI.Controllers
             };
         }
 
-        [HttpPost]
+		[HttpPost]
+		[Route("Cloud/ForceChargeAllTodayTimePeriod1")]
+		public async Task<ApiResult> FoxCloudForceChargeAllTodayTimePeriod1(CancellationToken ct, [FromQuery] bool enableGridCharging = false)
+		{
+			return new ApiResult()
+			{
+				ResultCode = await _foxESSService.FoxCloudForceChargeAllTodayTimePeriod1(enableGridCharging, ct)
+			};
+		}
+
+		[HttpPost]
         [Route("Cloud/DisableForceChargeTimePeriod1")]
         public async Task<ApiResult> FoxCloudDisableForceChargeTimePeriod1(CancellationToken ct)
         {

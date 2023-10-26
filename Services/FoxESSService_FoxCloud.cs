@@ -137,10 +137,47 @@ namespace Roses.SolarAPI.Services
             return response;
         }
 
-        /// <summary>
-        /// Set inverter for feed-in
-        /// </summary>
-        public async Task<string> FoxCloudSetWorkModeFeedIn(CancellationToken ct = default)
+		/// <summary>
+		/// Force charge around the clock
+		/// </summary>
+		public async Task<string> FoxCloudForceChargeAllTodayTimePeriod1(bool enableGridCharging = false, CancellationToken ct = default)
+		{
+			TimeOnly start = new TimeOnly(00, 01);
+			TimeOnly end = new TimeOnly(23, 59);
+
+			SetBatteryChargeTimesRequest request = new SetBatteryChargeTimesRequest()
+			{
+				Sn = await ResolveSerialNumberAsync(ct),
+				Times = new Time[]
+				{
+					new Time() {
+						StartTime = new StartTime() { Hour = start.Hour.ToString("00"), Minute = start.Minute.ToString("00") },
+						EnableCharge = true,
+						EnableGrid = enableGridCharging,
+						EndTime = new EndTime() { Hour = end.Hour.ToString("00"), Minute = end.Minute.ToString("00") },
+						Tip = string.Empty
+					},
+					new Time() {
+						StartTime = new StartTime() { Hour = "0", Minute = "0" },
+						EnableCharge = false,
+						EnableGrid = false,
+						EndTime = new EndTime() { Hour = "0", Minute = "0" },
+						Tip = string.Empty
+					},
+				}
+			};
+
+			string response = (await SendFoxCloudRequest<SetBatteryChargeTimesRequest, SetBatteryChargeTimesResponse>(request, ct))!.ToFoxStatus()!.ToString();
+
+			_logger.LogInformation("Battery times set successfully via FoxCloud.");
+
+			return response;
+		}
+
+		/// <summary>
+		/// Set inverter for feed-in
+		/// </summary>
+		public async Task<string> FoxCloudSetWorkModeFeedIn(CancellationToken ct = default)
         {
             FoxErrorNumber responseCode = await SetWorkModeWithSpaKeyCheck(WorkModes.FEED_IN, ct);
 
