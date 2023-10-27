@@ -4,11 +4,11 @@
 
 **AMD64**
 
-docker pull drosedev/rosessolarapi:1.3
+docker pull drosedev/rosessolarapi:1.5
 
 **Raspberry Pi**
 
-docker pull drosedev/rosessolarapi:1.3-bullseye-slim-arm32v7
+docker pull drosedev/rosessolarapi:1.5-bullseye-slim-arm32v7
 
 https://hub.docker.com/repository/docker/drosedev/rosessolarapi
 
@@ -34,6 +34,10 @@ Force charge (stop discharge) but don't charge from grid (from now until 23:59)
 Force charge now from grid (from now until 23:59)
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/ForceChargeForTodayTimePeriod1?enableGridCharging=true`
+
+Force charge all day from grid (from 00:01 until 23:59)
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Cloud/ForceChargeAllTodayTimePeriod1?enableGridCharging=true`
 
 Stop force charging
 
