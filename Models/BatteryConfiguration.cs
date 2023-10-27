@@ -22,5 +22,7 @@ namespace Roses.SolarAPI.Models
 
         public ushort MinSoCOnGrid { get; set; }
 
+        public string WorkMode { get; set; }
+
     }
 }

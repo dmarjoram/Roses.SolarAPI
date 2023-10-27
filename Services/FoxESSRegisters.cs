@@ -7,10 +7,15 @@
         /// </summary>
         BATTERY_SOC = 11036,
 
-        /// <summary>
-        /// Time period 1 should charge from grid (0 = No, or 1 = Yes)
-        /// </summary>
-        BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID = 41001,
+		/// <summary>
+		/// Inverter work mode
+		/// </summary>
+		INVERTER_WORKMODE = 41000,
+
+		/// <summary>
+		/// Time period 1 should charge from grid (0 = No, or 1 = Yes)
+		/// </summary>
+		BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID = 41001,
 
         /// <summary>
         /// Time Period 1 start time as Hours * 256 + Minutes. Set to 0 to disable force charge.

@@ -14,7 +14,9 @@ namespace Roses.SolarAPI.Services
         private readonly ILogger<FoxESSService> _logger;
         private readonly FoxESSConfiguration? _config;
         private const string BatteryConfigurationCacheKeyPrefix = "BatteryConfiguration";
-        private bool _initalised = false;
+		private const string WorkModeCacheKeyPrefix = "WorkMode";
+		private const string AddressValueCacheKeyPrefix = "AddressValue";
+		private bool _initalised = false;
 
         public FoxESSService(ILogger<FoxESSService> logger, IMemoryCache memoryCache, IConfiguration configuration)
         {
@@ -65,7 +67,11 @@ namespace Roses.SolarAPI.Services
                     short minSocOnGridValue = includeSoc ? client.ReadHoldingRegisters<short>(_config.DeviceId,
                         (int)FoxESSRegisters.BATTERY_MIN_SOC_ON_GRID_RW, 1).ToArray().FirstOrDefault() : (short)0;
 
-                    client.Disconnect();
+                    // Read work mode
+                    short workMode = client.ReadInputRegisters<short>(_config.DeviceId,
+                        (int)FoxESSRegisters.INVERTER_WORKMODE, 1).ToArray().FirstOrDefault();
+
+					client.Disconnect();
 
                     response = new BatteryConfiguration()
                     {
@@ -78,7 +84,8 @@ namespace Roses.SolarAPI.Services
                         StartDate2 = values[4].ToTimeOnlyFoxESS(),
                         EndDate2 = values[5].ToTimeOnlyFoxESS(),
                         MinSoC = (ushort)minSocValue,
-                        MinSoCOnGrid = (ushort)minSocOnGridValue
+                        MinSoCOnGrid = (ushort)minSocOnGridValue,
+                        WorkMode = ((WorkMode)workMode).ToString()
                     };
 
                     _logger.LogInformation("Retrieved battery configuration from FoxESS inverter. Adding to memory cache.");
@@ -101,7 +108,41 @@ namespace Roses.SolarAPI.Services
             return response;
         }
 
-        public async Task<string> SetBatteryMinGridSoCToCurrentSoc(CancellationToken ct = default)
+
+		public short GetAddressValue(int address = 0)
+		{
+			AssertConfigured();
+
+            if (!_memoryCache.TryGetValue($"{AddressValueCacheKeyPrefix}:{_config!.IPAddress}:{_config.Port}:{_config.DeviceId}", out short response))
+            {
+                _logger.LogInformation("No cached address value found. Reading modbus registers.");
+
+                ModbusTcpClient? client = null;
+                try
+                {
+                    client = new ModbusTcpClient();
+
+                    client.Connect(new IPEndPoint(IPAddress.Parse(_config!.IPAddress!), _config.Port), ModbusEndianness.BigEndian);
+
+                    response = client.ReadInputRegisters<short>(_config.DeviceId, address, 1).ToArray().FirstOrDefault();
+
+                    _logger.LogInformation("Retrieved address value from FoxESS inverter. Adding to memory cache.");
+
+                    MemoryCacheEntryOptions cacheEntryOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromSeconds(_config.CacheSeconds));
+
+                    _memoryCache.Set($"{AddressValueCacheKeyPrefix}:{_config.IPAddress}:{_config.Port}:{_config.DeviceId}", response, cacheEntryOptions);
+                }
+                finally
+                {
+                    client?.Disconnect();
+                }
+            }
+
+            return response;
+		}
+
+		public async Task<string> SetBatteryMinGridSoCToCurrentSoc(CancellationToken ct = default)
         {
             bool success = await CopySingleRegister(
                 FoxESSRegisters.BATTERY_SOC, 
@@ -139,19 +180,43 @@ namespace Roses.SolarAPI.Services
             return FoxErrorNumber.OK.ToString();
         }
 
-        public async Task<string> ForceChargeForTodayTimePeriod1(CancellationToken ct = default)
+        public async Task<string> SetWorkMode(WorkMode workMode, CancellationToken ct = default)
+        {
+            await WriteSingleRegister((FoxESSRegisters.INVERTER_WORKMODE, (short)workMode), ct);
+
+            // Invalidate cache
+            _memoryCache.Remove($"{BatteryConfigurationCacheKeyPrefix}:{_config!.IPAddress}:{_config.Port}:{_config.DeviceId}");
+
+			return FoxErrorNumber.OK.ToString();
+        }
+
+		public async Task<string> ForceChargeForTodayTimePeriod1(CancellationToken ct = default)
         {
             TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
             TimeOnly end = new TimeOnly(23, 59);
 
             await WriteSingleRegisters(ct,
-                (FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, now.ToFoxESSRegister()),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, (short)1),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, now.ToFoxESSRegister()),
                 (FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, end.ToFoxESSRegister()));
 
             return FoxErrorNumber.OK.ToString();
         }
 
-        public async Task<string> ForceChargeForTodayTimePeriod2(CancellationToken ct = default)
+		public async Task<string> ForceChargeAllTodayTimePeriod1(CancellationToken ct = default)
+		{
+			TimeOnly now = new TimeOnly(0, 1);
+			TimeOnly end = new TimeOnly(23, 59);
+
+			await WriteSingleRegisters(ct,
+				//(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, (short)1),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, now.ToFoxESSRegister()),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, end.ToFoxESSRegister()));
+
+			return FoxErrorNumber.OK.ToString();
+		}
+
+		public async Task<string> ForceChargeForTodayTimePeriod2(CancellationToken ct = default)
         {
             TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
             TimeOnly end = new TimeOnly(23, 59);
@@ -166,7 +231,8 @@ namespace Roses.SolarAPI.Services
         public async Task<string> DisableForceChargeTimePeriod1(CancellationToken ct = default)
         {
             await WriteSingleRegisters(ct,
-                (FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, 0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, (short)0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, 0),
                 (FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, 0));
 
             return FoxErrorNumber.OK.ToString();

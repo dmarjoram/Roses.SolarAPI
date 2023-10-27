@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Roses.SolarAPI.Configuration;
 using Roses.SolarAPI.Models;
 using Roses.SolarAPI.Models.FoxCloud;
+using Roses.SolarAPI.Models.Local;
 using Roses.SolarAPI.Services;
 using System.ComponentModel.DataAnnotations;
 
@@ -65,17 +66,75 @@ namespace Roses.SolarAPI.Controllers
             };
         }
 
-        //[HttpPost]
-        //[Route("Local/DisableForceChargeTimePeriod1")]
-        //public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
-        //{
-        //    return new ApiResult()
-        //    {
-        //        ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
-        //    };
-        //}
+		[HttpGet]
+		[Route("Local/GetAddressValue")]
+		public short GetAddressValue(CancellationToken ct, [FromQuery][Required] int address = 0)
+		{
+            return _foxESSService.GetAddressValue(address);
+		}
 
-        [HttpPost]
+		[HttpPost]
+		[Route("Local/WorkMode/SelfUse")]
+		public async Task<ApiResult> SetWorkModeSelfUse(CancellationToken ct = default)
+		{
+			return new ApiResult() { ResultCode = await _foxESSService.SetWorkMode(WorkMode.SELF_USE, ct) };
+		}
+
+		[HttpPost]
+		[Route("Local/WorkMode/FeedIn")]
+		public async Task<ApiResult> SetWorkModeFeedin(CancellationToken ct = default)
+		{
+			return new ApiResult() { ResultCode = await _foxESSService.SetWorkMode(WorkMode.FEED_IN, ct) };
+		}
+
+		[HttpPost]
+		[Route("Local/WorkMode/Backup")]
+		public async Task<ApiResult> SetWorkModeBackUp(CancellationToken ct = default)
+		{
+			return new ApiResult() { ResultCode = await _foxESSService.SetWorkMode(WorkMode.BACKUP, ct) };
+		}
+
+		[HttpPost]
+		[Route("Local/ForceChargeForTodayTimePeriod1")]
+		public async Task<ApiResult> ForceChargeForTodayTimePeriod1(CancellationToken ct)
+		{
+			return new ApiResult()
+			{
+				ResultCode = await _foxESSService.ForceChargeForTodayTimePeriod1(ct)
+			};
+		}
+
+		[HttpPost]
+		[Route("Local/ForceChargeAllTodayTimePeriod1")]
+		public async Task<ApiResult> ForceChargeAllTodayTimePeriod1(CancellationToken ct)
+		{
+			return new ApiResult()
+			{
+				ResultCode = await _foxESSService.ForceChargeAllTodayTimePeriod1(ct)
+			};
+		}
+
+		[HttpPost]
+		[Route("Local/DisableForceChargeTimePeriod1")]
+		public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
+		{
+			return new ApiResult()
+			{
+				ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
+			};
+		}
+
+		//[HttpPost]
+		//[Route("Local/DisableForceChargeTimePeriod1")]
+		//public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
+		//{
+		//    return new ApiResult()
+		//    {
+		//        ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
+		//    };
+		//}
+
+		[HttpPost]
         [Route("Cloud/ForceChargeForTodayTimePeriod1")]
         public async Task<ApiResult> FoxCloudForceChargeForTodayTimePeriod1(CancellationToken ct, [FromQuery] bool enableGridCharging = false)
         {

@@ -4,11 +4,11 @@
 
 **AMD64**
 
-docker pull drosedev/rosessolarapi:1.5
+docker pull drosedev/rosessolarapi:1.51
 
 **Raspberry Pi**
 
-docker pull drosedev/rosessolarapi:1.5-bullseye-slim-arm32v7
+docker pull drosedev/rosessolarapi:1.51-bullseye-slim-arm32v7
 
 https://hub.docker.com/repository/docker/drosedev/rosessolarapi
 
@@ -75,6 +75,14 @@ Hold current state of charge in battery (on-grid)
 Set both battery minimum state of charge values at once
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Local/SetBothBatteryMinSoC?minSoc=10&minSocGrid=10`
+
+Work Mode
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/WorkMode/SelfUse`
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/WorkMode/Backup`
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/WorkMode/FeedIn`
 
 # Home Assistant
 ### configuration.yml
