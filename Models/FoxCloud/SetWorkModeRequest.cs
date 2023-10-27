@@ -33,8 +33,13 @@ namespace Roses.SolarAPI.Models.FoxCloud
                 throw new ArgumentOutOfRangeException(nameof(workMode), "A valid work mode has not been provided.");
             }
 
+            Key = $"{spaKey.Trim()}__02__00";
+
             switch (spaKey)
             {
+                case SpaKeys.H106:
+                    Values = new Values108() { Mode = workMode };
+                    break;
                 case SpaKeys.H108:
                     Values = new Values108() { Mode = workMode };
                     break;
@@ -45,12 +50,10 @@ namespace Roses.SolarAPI.Models.FoxCloud
                     Values = new Values112() { Mode = workMode };
                     break;
                 default:
-                    Values = new Values106() { Mode = workMode };
+                    Values = new ValuesOpWorkMode() { Mode = workMode };
+                    Key = $"{spaKey.Trim()}";
                     break;
             }
-
-            // "h106__02__00"
-            Key = $"{spaKey.Trim()}__02__00";
         }
 
         public void Validate()
@@ -90,17 +93,26 @@ namespace Roses.SolarAPI.Models.FoxCloud
         [JsonPropertyName("h108__02__00")]
         public string? Mode { get; set; }
     }
+
     public partial class Values111 : IValues
     {
         [JsonPropertyName("h111__02__00")]
         public string? Mode { get; set; }
     }
+
     public partial class Values112 : IValues
     {
         [JsonPropertyName("h112__02__00")]
         public string? Mode { get; set; }
     }
-    public class WorkModes
+
+	public partial class ValuesOpWorkMode : IValues
+	{
+		[JsonPropertyName("operation_mode__work_mode")]
+		public string? Mode { get; set; }
+	}
+
+	public class WorkModes
     {
         public const string FEED_IN = "Feedin";
         public const string SELF_USE = "SelfUse";
@@ -115,8 +127,9 @@ namespace Roses.SolarAPI.Models.FoxCloud
         public const string H108 = "h108";
         public const string H111 = "h111";
         public const string H112 = "h112";
+        public const string OpWorkMode = "operation_mode__work_mode";
 
-        public const string DEFAULT = H112;
-        public readonly static string[] ALL = new[] { H106, H108, H111, H112 };
+		public const string DEFAULT = OpWorkMode;
+        public readonly static string[] ALL = new[] { OpWorkMode, H106, H108, H111, H112 };
     }
 }
