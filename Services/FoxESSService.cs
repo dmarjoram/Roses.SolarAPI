@@ -190,61 +190,49 @@ namespace Roses.SolarAPI.Services
 			return FoxErrorNumber.OK.ToString();
         }
 
-		public async Task<string> ForceChargeForTodayTimePeriod1(CancellationToken ct = default)
+		public async Task<string> ForceChargeForToday(CancellationToken ct = default)
         {
             TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
             TimeOnly end = new TimeOnly(23, 59);
 
-            await WriteSingleRegisters(ct,
-				(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, (short)1),
-				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, now.ToFoxESSRegister()),
-                (FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, end.ToFoxESSRegister()));
+			await WriteMultipleRegisters(ct,
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, 1),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, (ushort)now.ToFoxESSRegister()),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, (ushort)end.ToFoxESSRegister()),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_CHARGE_FROM_GRID, 0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_START_TIME, 0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, 0));
 
-            return FoxErrorNumber.OK.ToString();
+			return FoxErrorNumber.OK.ToString();
         }
 
-		public async Task<string> ForceChargeAllTodayTimePeriod1(CancellationToken ct = default)
+		public async Task<string> ForceChargeAllToday(CancellationToken ct = default)
 		{
 			TimeOnly now = new TimeOnly(0, 1);
 			TimeOnly end = new TimeOnly(23, 59);
 
-			await WriteSingleRegisters(ct,
-				//(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, (short)1),
-				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, now.ToFoxESSRegister()),
-				(FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, end.ToFoxESSRegister()));
+            await WriteMultipleRegisters(ct,
+                (FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, 1),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, (ushort)now.ToFoxESSRegister()),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, (ushort)end.ToFoxESSRegister()),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_CHARGE_FROM_GRID, 0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_START_TIME, 0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, 0));
 
 			return FoxErrorNumber.OK.ToString();
 		}
 
-		public async Task<string> ForceChargeForTodayTimePeriod2(CancellationToken ct = default)
+        public async Task<string> DisableForceCharge(CancellationToken ct = default)
         {
-            TimeOnly now = TimeOnly.FromDateTime(DateTime.Now);
-            TimeOnly end = new TimeOnly(23, 59);
-
-            await WriteSingleRegisters(ct,
-                (FoxESSRegisters.BATTERY_TIMEPERIOD2_START_TIME, now.ToFoxESSRegister()),
-                (FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, end.ToFoxESSRegister()));
-
-            return FoxErrorNumber.OK.ToString();
-        }
-
-        public async Task<string> DisableForceChargeTimePeriod1(CancellationToken ct = default)
-        {
-            await WriteSingleRegisters(ct,
-				(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, (short)0),
+			await WriteMultipleRegisters(ct,
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, 0),
 				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, 0),
-                (FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, 0));
+				(FoxESSRegisters.BATTERY_TIMEPERIOD1_END_TIME, 0),
+			    (FoxESSRegisters.BATTERY_TIMEPERIOD2_CHARGE_FROM_GRID, 0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_START_TIME, 0),
+				(FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, 0));
 
-            return FoxErrorNumber.OK.ToString();
-        }
-
-        public async Task<string> DisableForceChargeTimePeriod2(CancellationToken ct = default)
-        {
-            await WriteSingleRegisters(ct,
-                (FoxESSRegisters.BATTERY_TIMEPERIOD2_START_TIME, 0),
-                (FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, 0));
-
-            return FoxErrorNumber.OK.ToString();
+			return FoxErrorNumber.OK.ToString();
         }
 
         /// <summary>
@@ -286,11 +274,41 @@ namespace Roses.SolarAPI.Services
             }
         }
 
-        /// <summary>
-        /// Read a register value and write it to a different register
-        /// </summary>
-        /// <param name="ct">cancellation token</param>
-        private async Task<bool> CopySingleRegister(FoxESSRegisters originRegister, FoxESSRegisters destinationRegister, short minValue = 10, short maxValue = 100, CancellationToken ct = default)
+		/// <summary>
+		/// Write a set of registers to the inverter
+		/// </summary>
+		/// <param name="ct">cancellation token</param>
+		/// <param name="updates">register updates</param>
+		private async Task WriteMultipleRegisters(CancellationToken ct = default, params (FoxESSRegisters Register, ushort Value)[] updates)
+		{
+			AssertConfigured();
+
+			ModbusTcpClient? client = null;
+            try
+            {
+                client = new ModbusTcpClient();
+
+                client.Connect(new IPEndPoint(IPAddress.Parse(_config!.IPAddress!), _config.Port), ModbusEndianness.BigEndian);
+
+                ushort[] updateValues = updates.Select(u => u.Value).ToArray();
+
+                int startAddress = updates.Min(u => (int)u.Register);
+
+                await client.WriteMultipleRegistersAsync(_config.DeviceId, startAddress, updateValues, ct);
+
+                _logger.LogInformation("Successfully written {value} to register(s) {register}.", $"[{(string.Join(',', updates.Select(u => u.Value)))}]", startAddress);
+            }
+            finally
+            {
+                client?.Disconnect();
+            }
+		}
+
+		/// <summary>
+		/// Read a register value and write it to a different register
+		/// </summary>
+		/// <param name="ct">cancellation token</param>
+		private async Task<bool> CopySingleRegister(FoxESSRegisters originRegister, FoxESSRegisters destinationRegister, short minValue = 10, short maxValue = 100, CancellationToken ct = default)
         {
             AssertConfigured();
 

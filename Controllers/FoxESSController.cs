@@ -95,32 +95,32 @@ namespace Roses.SolarAPI.Controllers
 		}
 
 		[HttpPost]
-		[Route("Local/ForceChargeForTodayTimePeriod1")]
-		public async Task<ApiResult> ForceChargeForTodayTimePeriod1(CancellationToken ct)
+		[Route("Local/ForceChargeForToday")]
+		public async Task<ApiResult> ForceChargeForToday(CancellationToken ct)
 		{
 			return new ApiResult()
 			{
-				ResultCode = await _foxESSService.ForceChargeForTodayTimePeriod1(ct)
+				ResultCode = await _foxESSService.ForceChargeForToday(ct)
 			};
 		}
 
 		[HttpPost]
-		[Route("Local/ForceChargeAllTodayTimePeriod1")]
-		public async Task<ApiResult> ForceChargeAllTodayTimePeriod1(CancellationToken ct)
+		[Route("Local/ForceChargeAllToday")]
+		public async Task<ApiResult> ForceChargeAllToday(CancellationToken ct)
 		{
 			return new ApiResult()
 			{
-				ResultCode = await _foxESSService.ForceChargeAllTodayTimePeriod1(ct)
+				ResultCode = await _foxESSService.ForceChargeAllToday(ct)
 			};
 		}
 
 		[HttpPost]
-		[Route("Local/DisableForceChargeTimePeriod1")]
-		public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
+		[Route("Local/DisableForceCharge")]
+		public async Task<ApiResult> DisableForceCharge(CancellationToken ct)
 		{
 			return new ApiResult()
 			{
-				ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
+				ResultCode = await _foxESSService.DisableForceCharge(ct)
 			};
 		}
 

@@ -84,6 +84,18 @@ Work Mode
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Local/WorkMode/FeedIn`
 
+Force Charge from Grid (now until 23:59)
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/ForceChargeForToday`
+
+Force Charge from Grid (00:00 until 23:59)
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/ForceChargeAllToday`
+
+Disable Force Charge
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/DisableForceCharge`
+
 # Home Assistant
 ### configuration.yml
 
