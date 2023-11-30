@@ -43,6 +43,14 @@ Stop force charging
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/DisableForceChargeTimePeriod1`
 
+Force discharge now (from now until 23:59 at 5000W)
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Cloud/SetForceDischarge?dischargePower=5000`
+
+Stop force discharge
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Cloud/DisableForceDischarge`
+
 Work Mode
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/SelfUse`
