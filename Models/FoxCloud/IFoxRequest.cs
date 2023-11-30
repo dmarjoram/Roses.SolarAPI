@@ -5,5 +5,7 @@
         void Validate();
 
         string RequestUri { get; }
+
+        bool GetRequest { get; }
     }
 }

@@ -19,6 +19,9 @@ namespace Roses.SolarAPI.Models.FoxCloud
         [JsonIgnore]
         public string RequestUri => DeviceListUri;
 
+        [JsonIgnore]
+        public bool GetRequest => false;
+
         public void Validate()
         {
             // Nothing to do here

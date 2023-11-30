@@ -16,7 +16,10 @@ namespace Roses.SolarAPI.Models.FoxCloud
         [JsonIgnore]
         public string RequestUri => SetWorkModeUri;
 
-        public SetWorkModeRequest(string spaKey, string workMode)
+		[JsonIgnore]
+		public bool GetRequest => false;
+
+		public SetWorkModeRequest(string spaKey, string workMode)
         {
             if (string.IsNullOrWhiteSpace(spaKey))
             {
@@ -117,8 +120,9 @@ namespace Roses.SolarAPI.Models.FoxCloud
         public const string FEED_IN = "Feedin";
         public const string SELF_USE = "SelfUse";
         public const string BACKUP = "Backup";
+		public const string FORCE_DISCHARGE = "ForceDischarge";
 
-        public readonly static string[] ALL = new[] { FEED_IN, SELF_USE, BACKUP };
+		public readonly static string[] ALL = new[] { FEED_IN, SELF_USE, BACKUP, FORCE_DISCHARGE };
     }
 
     public class SpaKeys

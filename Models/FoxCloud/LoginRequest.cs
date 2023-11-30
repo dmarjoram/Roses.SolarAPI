@@ -16,10 +16,13 @@ namespace Roses.SolarAPI.Models.FoxCloud
         [JsonIgnore]
         public string RequestUri => FoxCloudLoginUri;
 
-        /// <summary>
-        /// Validate the request parameters
-        /// </summary>
-        public void Validate()
+		[JsonIgnore]
+		public bool GetRequest => false;
+
+		/// <summary>
+		/// Validate the request parameters
+		/// </summary>
+		public void Validate()
         {
             if (string.IsNullOrWhiteSpace(User))
             {

@@ -32,7 +32,27 @@ namespace Roses.SolarAPI.Extensions
             return new TimeOnly(int.Parse(rawValue.Hour!), int.Parse(rawValue.Minute!));
         }
 
-        public static short ToFoxESSRegister(this TimeOnly rawValue)
+		public static TimeOnly ToStartTimeOnly(this Policy rawValue)
+		{
+			if (rawValue == null || rawValue.StartHour == null || rawValue.StartMinute == null)
+			{
+				throw new ArgumentNullException("Start time is not provided.");
+			}
+
+			return new TimeOnly((int)rawValue.StartHour!, (int)rawValue.StartMinute!);
+		}
+
+		public static TimeOnly ToEndTimeOnly(this Policy rawValue)
+		{
+			if (rawValue == null || rawValue.EndHour == null || rawValue.EndMinute == null)
+			{
+				throw new ArgumentNullException("Start time is not provided.");
+			}
+
+			return new TimeOnly((int)rawValue.EndHour!, (int)rawValue.EndMinute!);
+		}
+
+		public static short ToFoxESSRegister(this TimeOnly rawValue)
         {
             return (short)(rawValue.Hour * 256 + rawValue.Minute);
         }

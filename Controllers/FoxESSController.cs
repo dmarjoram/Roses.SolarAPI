@@ -174,7 +174,27 @@ namespace Roses.SolarAPI.Controllers
             };
         }
 
-        [HttpGet]
+        [HttpPost]
+        [Route("Cloud/SetForceDischarge")]
+        public async Task<ApiResult> FoxCloudSetForceDischarge(CancellationToken ct, [FromQuery][Required] ushort dischargePower = 5000)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.FoxCloudForceDischargeToday(dischargePower, ct)
+            };
+        }
+
+        [HttpPost]
+        [Route("Cloud/DisableForceDischarge")]
+        public async Task<ApiResult> FoxCloudDisableForceDischarge(CancellationToken ct)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.FoxCloudDisableForceDischarge(ct)
+            };
+        }
+
+		[HttpGet]
         [Route("Cloud/DeviceList")]
         public Task<Device[]> GetDeviceList(CancellationToken ct)
         {
