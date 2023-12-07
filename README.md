@@ -106,10 +106,9 @@ Disable Force Charge
 
 # Home Assistant
 ### configuration.yml
-
-# Control of FOX ESS battery via Roses.SolarAPI
+### Control of FOX ESS battery via Roses.SolarAPI
+```
 rest_command:
-
   fox_modbus_hold_charge:
     url: http://192.168.0.5:8200/FoxESS/Local/SetBatteryMinGridSoCToCurrentSoc
     method: POST
@@ -179,3 +178,4 @@ rest_command:
     headers:
       accept: "application/json"
       user-agent: 'Mozilla/5.0 {{ useragent }}'
+```
