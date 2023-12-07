@@ -107,53 +107,75 @@ Disable Force Charge
 # Home Assistant
 ### configuration.yml
 
-    # Control of FOX ESS battery via Roses.SolarAPI
-        rest_command:
-          fox_modbus_hold_charge:
-            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoCToCurrentSoc
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'
+# Control of FOX ESS battery via Roses.SolarAPI
+rest_command:
+
+  fox_modbus_hold_charge:
+    url: http://192.168.0.5:8200/FoxESS/Local/SetBatteryMinGridSoCToCurrentSoc
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
       
-          fox_modbus_allow_discharge:
-            url: http://dockerhost-ip:mappedport/FoxESS/Local/SetBatteryMinGridSoC?percentage=10
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'  
+  fox_modbus_slow_charge:
+    url: http://192.168.0.5:8200/FoxESS/Local/SetBatteryMinGridSoC?percentage=99
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
+      
+  fox_modbus_allow_discharge:
+    url: http://192.168.0.5:8200/FoxESS/Local/SetBatteryMinGridSoC?percentage=10
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
+      
+  fox_modbus_force_charge_now:
+    url: http://192.168.0.5:8200/FoxESS/Local/ForceChargeAllToday
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
 
-          fox_force_charge_now:
-            url: http://dockerhost-ip:mappedport/FoxESS/Cloud/ForceChargeForTodayTimePeriod1?enableGridCharging=true
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'
-            
-          fox_force_charge_stop:
-            url: http://dockerhost-ip:mappedport/FoxESS/Cloud/DisableForceChargeTimePeriod1
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'
+  fox_modbus_force_charge_stop:
+    url: http://192.168.0.5:8200/FoxESS/Local/DisableForceCharge
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
 
-          fox_workmode_selfuse:
-            url: http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/SelfUse
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'
+  fox_force_charge_now_from_grid:
+    url: http://192.168.0.5:8200/FoxESS/Cloud/ForceChargeAllTodayTimePeriod1?enableGridCharging=true
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
 
-          fox_workmode_backup:
-            url: http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/Backup
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'
+  fox_force_charge_now:
+    url: http://192.168.0.5:8200/FoxESS/Cloud/ForceChargeForTodayTimePeriod1?enableGridCharging=false
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
+    
+  fox_force_charge_stop:
+    url: http://192.168.0.5:8200/FoxESS/Cloud/DisableForceChargeTimePeriod1
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
+    
+  fox_force_discharge_now:
+    url: http://192.168.0.5:8200/FoxESS/Cloud/SetForceDischarge?dischargePower=5000
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}' 
 
-          fox_workmode_feedin:
-            url: http://dockerhost-ip:mappedport/FoxESS/Cloud/WorkMode/FeedIn
-            method: POST
-            headers:
-              accept: "application/json"
-              user-agent: 'Mozilla/5.0 {{ useragent }}'
+  fox_force_discharge_stop:
+    url: http://192.168.0.5:8200/FoxESS/Cloud/DisableForceDischarge
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
