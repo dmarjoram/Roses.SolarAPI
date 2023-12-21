@@ -4,10 +4,10 @@
 
 **AMD64**
 
-docker pull drosedev/rosessolarapi:1.7
+docker pull drosedev/rosessolarapi:2.2
 
 **Raspberry Pi**
-
+NOTE: Fox Cloud calls currently not working on the Pi image. Use the x64 image instead for now.
 docker pull drosedev/rosessolarapi:1.7-bullseye-slim-arm32v7
 
 https://hub.docker.com/repository/docker/drosedev/rosessolarapi
