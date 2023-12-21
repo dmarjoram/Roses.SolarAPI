@@ -36,5 +36,7 @@ namespace Roses.SolarAPI.Models.FoxCloud
         }
 
         private const string FoxCloudLoginUri = "https://www.foxesscloud.com/c/v0/user/login";
+        //private const string FoxCloudLoginUri = "https://www.foxesscloud.com/c/v0/errors/message";
+        
     }
 }

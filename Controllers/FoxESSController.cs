@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PuppeteerSharp;
 using Roses.SolarAPI.Configuration;
 using Roses.SolarAPI.Models;
 using Roses.SolarAPI.Models.FoxCloud;
@@ -238,6 +239,16 @@ namespace Roses.SolarAPI.Controllers
             {
                 ResultCode = await _foxESSService.FoxCloudSetWorkModeBackup(ct)
             };
+        }
+
+        /// <summary>
+        /// Generate Fox Cloud request signature
+        /// </summary>
+        [HttpPost]
+        [Route("Cloud/Headless/Login")]
+        public async Task<string> CloudHeadlessLogin2(string uriPath, string token, string lang, long timestamp, CancellationToken ct = default)
+        {
+            return await _foxESSService.FoxCloudGenerateSignature(uriPath, token, lang, timestamp.ToString(), ct);
         }
     }
 }

@@ -5,6 +5,7 @@
         OK = 0,
         InvalidRequest = 40257,
 		Timeout = 41203,
+        ProgramBranchNotProcessed = 41202,
         TokenInvalid = 41808,
         ParameterInvalid = 40256,
         OutOfBounds = 99997,
