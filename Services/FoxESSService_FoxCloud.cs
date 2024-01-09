@@ -16,6 +16,7 @@ namespace Roses.SolarAPI.Services
         private const string FoxCloudTokenPrefix = "FoxCloudToken";
         private const string FoxCloudDeviceListPrefix = "FoxCloudDeviceList";
         private const string FoxCloudSignatureBlob = "https://www.foxesscloud.com/js/signature.wasm";
+        private static SemaphoreSlim SigDownloadSemaphore = new SemaphoreSlim(1, 1);
 
         private const int FoxCloudRetryInvalidParamDelayMilliseconds = 500;
         private const int FoxCloudRetryDelayMilliseconds = 5000;
@@ -275,6 +276,16 @@ namespace Roses.SolarAPI.Services
         /// <returns>signature</returns>
         public async Task<string> FoxCloudGenerateSignature(string uriPath, string token, string language, string timestamp, CancellationToken ct = default)
         {
+            await SigDownloadSemaphore.WaitAsync(ct);
+            try
+            {
+                await AssertSignatureBlob();
+            }
+            finally
+            {
+                SigDownloadSemaphore.Release();
+            }
+
             using (var browser = await Puppeteer.LaunchAsync(new LaunchOptions()
             {
                 Headless = true,
@@ -419,8 +430,6 @@ namespace Roses.SolarAPI.Services
         /// <returns>fox cloud token</returns>
         private async Task<string> FoxCloudLogin(CancellationToken ct = default, bool useCache = true)
         {
-            await AssertSignatureBlob();
-
             if (useCache && _memoryCache.TryGetValue($"{FoxCloudTokenPrefix}:{_config!.Username}", out string token))
             {
                 _logger.LogInformation("FoxCloud login returning cached token.");
