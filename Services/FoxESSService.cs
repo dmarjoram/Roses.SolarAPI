@@ -1,4 +1,5 @@
 ﻿using FluentModbus;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Caching.Memory;
 using Roses.SolarAPI.Configuration;
 using Roses.SolarAPI.Extensions;
@@ -13,16 +14,18 @@ namespace Roses.SolarAPI.Services
         private readonly IMemoryCache _memoryCache;
         private readonly ILogger<FoxESSService> _logger;
         private readonly FoxESSConfiguration? _config;
+        private readonly IWebHostEnvironment _webHostEnvironment;
         private const string BatteryConfigurationCacheKeyPrefix = "BatteryConfiguration";
 		private const string WorkModeCacheKeyPrefix = "WorkMode";
 		private const string AddressValueCacheKeyPrefix = "AddressValue";
 		private bool _initalised = false;
 
-        public FoxESSService(ILogger<FoxESSService> logger, IMemoryCache memoryCache, IConfiguration configuration)
+        public FoxESSService(ILogger<FoxESSService> logger, IMemoryCache memoryCache, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
         {
             _logger = logger;
             _memoryCache = memoryCache;
             _config = configuration.GetSection(nameof(FoxESSConfiguration)).Get<FoxESSConfiguration>();
+            _webHostEnvironment = webHostEnvironment;
 
             if (_config == null)
             {

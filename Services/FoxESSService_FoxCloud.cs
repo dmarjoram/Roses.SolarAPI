@@ -5,6 +5,7 @@ using Roses.SolarAPI.Extensions;
 using Roses.SolarAPI.Models.FoxCloud;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -14,6 +15,7 @@ namespace Roses.SolarAPI.Services
     {
         private const string FoxCloudTokenPrefix = "FoxCloudToken";
         private const string FoxCloudDeviceListPrefix = "FoxCloudDeviceList";
+        private const string FoxCloudSignatureBlob = "https://www.foxesscloud.com/js/signature.wasm";
 
         private const int FoxCloudRetryInvalidParamDelayMilliseconds = 500;
         private const int FoxCloudRetryDelayMilliseconds = 5000;
@@ -417,6 +419,8 @@ namespace Roses.SolarAPI.Services
         /// <returns>fox cloud token</returns>
         private async Task<string> FoxCloudLogin(CancellationToken ct = default, bool useCache = true)
         {
+            await AssertSignatureBlob();
+
             if (useCache && _memoryCache.TryGetValue($"{FoxCloudTokenPrefix}:{_config!.Username}", out string token))
             {
                 _logger.LogInformation("FoxCloud login returning cached token.");
@@ -444,6 +448,37 @@ namespace Roses.SolarAPI.Services
             }
 
             return token;
+        }
+
+        private async Task AssertSignatureBlob()
+        {
+            // Check for signature generator
+            string signatureBlob = Path.Combine(_webHostEnvironment.WebRootPath, Path.Combine("js", "signature.wasm"));
+
+            if (!File.Exists(signatureBlob))
+            {
+                try
+                {
+                    HttpClient client = new HttpClient();
+                    using (Stream stream = await client.GetStreamAsync(FoxCloudSignatureBlob))
+                    {
+                        using (FileStream fileStream = new FileStream(signatureBlob, FileMode.CreateNew))
+                        {
+                            await stream.CopyToAsync(fileStream);
+                        }
+                    }
+                    _logger.LogInformation("Signature blob downloaded.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Error downloading signature blob. {ex.Message}");
+                    if (File.Exists(signatureBlob))
+                    {
+                        _logger.LogInformation("Deleting incomplete signature blob.");
+                        File.Delete(signatureBlob);
+                    }
+                }
+            }
         }
 
         private async Task<string> ResolveSerialNumberAsync(CancellationToken ct)
