@@ -3,11 +3,8 @@ using PuppeteerSharp;
 using Roses.SolarAPI.Exceptions;
 using Roses.SolarAPI.Extensions;
 using Roses.SolarAPI.Models.FoxCloud;
-using System;
 using System.Net;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
+using static Roses.SolarAPI.Models.FoxCloud.DisableSchedulerRequest2;
 
 namespace Roses.SolarAPI.Services
 {
@@ -22,9 +19,13 @@ namespace Roses.SolarAPI.Services
         private const int FoxCloudRetryDelayMilliseconds = 5000;
         private const int FoxDeviceListCacheHours = 1;
 
-        // Keep track of SPA key that works
-        public static string DefaultSpaKey = SpaKeys.DEFAULT;
+        // Keep track of SPA key that works for work mode
+        public static string DefaultSpaKey = WorkModeSpaKeys.DEFAULT;
         public static int CurrentSpaKey = 0;
+
+        // Keep track of SPA key that works for disabling discharge
+        public static string DefaultSpaKeyDisableSchedule = DisableScheduleSpaKeys.DEFAULT;
+        public static int CurrentSpaKeyDisableSchedule = 0;
 
         /// <summary>
         /// Get device list for FoxCloud account
@@ -112,13 +113,45 @@ namespace Roses.SolarAPI.Services
         /// </summary>
         public async Task<string> FoxCloudDisableForceDischarge(CancellationToken ct = default)
         {
-            DisableSchedulerRequest request = new DisableSchedulerRequest() { DeviceSerialNumber = await ResolveSerialNumberAsync(ct) };
+            Func<Task<FoxErrorNumber>> sendRequest = async () =>
+            {
+                DisableSchedulerRequest2 request = new DisableSchedulerRequest2(DefaultSpaKeyDisableSchedule)
+                {
+                    Id = (await ResolveCloudDeviceIdAsync(ct)).GetValueOrDefault()
+                };
 
-            string response = (await SendFoxCloudRequest<DisableSchedulerRequest, DisableSchedulerResponse>(request, ct))!.ToFoxStatus()!.ToString();
+                return (await SendFoxCloudRequest<DisableSchedulerRequest2, DisableSchedulerResponse>(request, ct))!.ToFoxStatus()!;
+            };
 
-            _logger.LogInformation("Inverter schedule disabled successfully via FoxCloud.");
+            FoxErrorNumber responseCode = await sendRequest();
 
-            return response;
+            for (int i = 0; i < DisableScheduleSpaKeys.ALL.Length; i++)
+            {
+                if (responseCode == FoxErrorNumber.InvalidRequest)
+                {
+                    // Try next SPA key
+                    DefaultSpaKeyDisableSchedule = DisableScheduleSpaKeys.ALL[++CurrentSpaKeyDisableSchedule % DisableScheduleSpaKeys.ALL.Length];
+
+                    _logger?.LogInformation("Trying next SPA key. {DefaultSpaKeyDisableSchedule}", DefaultSpaKeyDisableSchedule);
+
+                    responseCode = await sendRequest();
+                }
+            }
+
+            _logger?.LogInformation("Inverter schedule disabled successfully via FoxCloud.");
+
+            return responseCode!.ToString();
+
+            //DisableSchedulerRequest2 request = new DisableSchedulerRequest2()
+            //{
+            //    DeviceSerialNumber = await ResolveSerialNumberAsync(ct)
+            //};
+
+            //string response = (await SendFoxCloudRequest<DisableSchedulerRequest2, DisableSchedulerResponse>(request, ct))!.ToFoxStatus()!.ToString();
+
+            //_logger.LogInformation("Inverter schedule disabled successfully via FoxCloud.");
+
+            //return response;
         }
 
         /// <summary>
@@ -528,12 +561,12 @@ namespace Roses.SolarAPI.Services
 
             FoxErrorNumber responseCode = await sendRequest();
 
-            for (int i = 0; i < SpaKeys.ALL.Length; i++)
+            for (int i = 0; i < WorkModeSpaKeys.ALL.Length; i++)
             {
                 if (responseCode == FoxErrorNumber.InvalidRequest)
                 {
                     // Try next SPA key
-                    DefaultSpaKey = SpaKeys.ALL[++CurrentSpaKey % SpaKeys.ALL.Length];
+                    DefaultSpaKey = WorkModeSpaKeys.ALL[++CurrentSpaKey % WorkModeSpaKeys.ALL.Length];
 
                     _logger?.LogInformation("Trying next SPA key. {DefaultSpaKey}", DefaultSpaKey);
 
