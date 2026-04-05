@@ -7,15 +7,15 @@
         /// </summary>
         BATTERY_SOC = 11036,
 
-		/// <summary>
-		/// Inverter work mode
-		/// </summary>
-		INVERTER_WORKMODE = 41000,
+        /// <summary>
+        /// Inverter work mode
+        /// </summary>
+        INVERTER_WORKMODE = 41000,
 
-		/// <summary>
-		/// Time period 1 should charge from grid (0 = No, or 1 = Yes)
-		/// </summary>
-		BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID = 41001,
+        /// <summary>
+        /// Time period 1 should charge from grid (0 = No, or 1 = Yes)
+        /// </summary>
+        BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID = 41001,
 
         /// <summary>
         /// Time Period 1 start time as Hours * 256 + Minutes. Set to 0 to disable force charge.
@@ -51,5 +51,20 @@
         /// Minimum battery state of when on grid. Minimum value 10.
         /// </summary>
         BATTERY_MIN_SOC_ON_GRID_RW = 41011,
+
+        /// <summary>
+        /// Remote control enable. 1 to enable, 0 to disable.
+        /// </summary>
+        REMOTE_ENABLE = 44000,
+
+        /// <summary>
+        /// Timeout (seconds) for remote control. 
+        /// </summary>
+        TIMEOUT = 44001,
+
+        /// <summary>
+        /// Active power. Positive watts = discharge (e.g. 3000 for 3 kW)
+        /// </summary>
+        ACTIVE_POWER = 44002,
     }
 }

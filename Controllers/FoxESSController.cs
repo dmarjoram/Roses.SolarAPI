@@ -125,17 +125,37 @@ namespace Roses.SolarAPI.Controllers
 			};
 		}
 
-		//[HttpPost]
-		//[Route("Local/DisableForceChargeTimePeriod1")]
-		//public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
-		//{
-		//    return new ApiResult()
-		//    {
-		//        ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
-		//    };
-		//}
+        [HttpPost]
+        [Route("Local/ForceDischarge")]
+        public async Task<ApiResult> ForceDischarge(CancellationToken ct, [FromQuery][Required] short dischargePower = 6000)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.ForceDischarge(dischargePower, ct)
+            };
+        }
 
-		[HttpPost]
+        [HttpPost]
+        [Route("Local/DisableForceDischarge")]
+        public async Task<ApiResult> DisableForceDischarge(CancellationToken ct)
+        {
+            return new ApiResult()
+            {
+                ResultCode = await _foxESSService.DisableForceDischarge(ct)
+            };
+        }
+
+        //[HttpPost]
+        //[Route("Local/DisableForceChargeTimePeriod1")]
+        //public async Task<ApiResult> DisableForceChargeTimePeriod1(CancellationToken ct)
+        //{
+        //    return new ApiResult()
+        //    {
+        //        ResultCode = await _foxESSService.DisableForceChargeTimePeriod1(ct)
+        //    };
+        //}
+
+        [HttpPost]
         [Route("Cloud/ForceChargeForTodayTimePeriod1")]
         public async Task<ApiResult> FoxCloudForceChargeForTodayTimePeriod1(CancellationToken ct, [FromQuery] bool enableGridCharging = false)
         {

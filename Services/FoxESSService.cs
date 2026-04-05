@@ -1,5 +1,4 @@
 ﻿using FluentModbus;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Caching.Memory;
 using Roses.SolarAPI.Configuration;
 using Roses.SolarAPI.Extensions;
@@ -19,6 +18,12 @@ namespace Roses.SolarAPI.Services
 		private const string WorkModeCacheKeyPrefix = "WorkMode";
 		private const string AddressValueCacheKeyPrefix = "AddressValue";
 		private bool _initalised = false;
+
+		private readonly object _forceDischargePollingLock = new();
+		private CancellationTokenSource? _forceDischargePollingCts;
+		private Task? _forceDischargePollingTask;
+
+		private const short REMOTE_CONTROL_POLLING_INTERVAL = 15;
 
         public FoxESSService(ILogger<FoxESSService> logger, IMemoryCache memoryCache, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
         {
@@ -225,8 +230,10 @@ namespace Roses.SolarAPI.Services
 			return FoxErrorNumber.OK.ToString();
 		}
 
-        public async Task<string> DisableForceCharge(CancellationToken ct = default)
-        {
+		public async Task<string> DisableForceCharge(CancellationToken ct = default)
+		{
+			CancelForceDischargePolling();
+
 			await WriteMultipleRegisters(ct,
 				(FoxESSRegisters.BATTERY_TIMEPERIOD1_CHARGE_FROM_GRID, 0),
 				(FoxESSRegisters.BATTERY_TIMEPERIOD1_START_TIME, 0),
@@ -236,6 +243,124 @@ namespace Roses.SolarAPI.Services
 				(FoxESSRegisters.BATTERY_TIMEPERIOD2_END_TIME, 0));
 
 			return FoxErrorNumber.OK.ToString();
+        }
+
+        public async Task<string> DisableForceDischarge(CancellationToken ct = default)
+        {
+            CancelForceDischargePolling();
+
+            await WriteSingleRegisters(ct,
+                (FoxESSRegisters.TIMEOUT, 0),
+                (FoxESSRegisters.REMOTE_ENABLE, 0));
+
+            return FoxErrorNumber.OK.ToString();
+        }
+
+        /// <summary>
+        /// Enables forced discharge at the specified power level. Performs an immediate register write then
+        /// starts a background polling loop that refreshes the registers every <see cref="REMOTE_CONTROL_POLLING_INTERVAL"/>
+        /// seconds to keep the inverter in forced-discharge mode. If polling is already active, returns OK
+        /// immediately without starting a second loop.
+        /// </summary>
+        /// <param name="forceDischargePower">The discharge power in watts.</param>
+        /// <param name="ct">Cancellation token for the initial register write.</param>
+        public async Task<string> ForceDischarge(short forceDischargePower = 6000, CancellationToken ct = default)
+        {
+            lock (_forceDischargePollingLock)
+            {
+                if (_forceDischargePollingTask is { IsCompleted: false })
+                {
+                    return FoxErrorNumber.OK.ToString();
+                }
+            }
+
+            (FoxESSRegisters Register, short Value)[] updates =
+            [
+                (FoxESSRegisters.TIMEOUT, REMOTE_CONTROL_POLLING_INTERVAL * 2),
+                (FoxESSRegisters.REMOTE_ENABLE, 1),
+                (FoxESSRegisters.ACTIVE_POWER, forceDischargePower)
+            ];
+
+            await WriteSingleRegisters(ct, updates);
+
+            StartForceDischargePolling(updates);
+
+            return FoxErrorNumber.OK.ToString();
+        }
+
+        /// <summary>
+        /// Creates a <see cref="CancellationTokenSource"/> and starts <see cref="PollForceDischargeAsync"/> as a
+        /// fire-and-forget async task, storing both under the polling lock so they can be cancelled later.
+        /// </summary>
+        /// <param name="updates">The register updates to repeat on each polling tick.</param>
+        private void StartForceDischargePolling((FoxESSRegisters Register, short Value)[] updates)
+        {
+            CancellationTokenSource cts = new();
+
+            lock (_forceDischargePollingLock)
+            {
+                _forceDischargePollingCts = cts;
+                _forceDischargePollingTask = PollForceDischargeAsync(updates, cts.Token);
+            }
+        }
+
+        /// <summary>
+        /// Signals cancellation of the active forced-discharge polling loop, if one is running, and schedules
+        /// disposal of its <see cref="CancellationTokenSource"/> once the loop task completes.
+        /// Safe to call when no polling is active.
+        /// </summary>
+        private void CancelForceDischargePolling()
+        {
+            CancellationTokenSource? cts;
+            Task? pollingTask;
+
+            lock (_forceDischargePollingLock)
+            {
+                cts = _forceDischargePollingCts;
+                pollingTask = _forceDischargePollingTask;
+                _forceDischargePollingCts = null;
+                _forceDischargePollingTask = null;
+            }
+
+            if (cts == null)
+            {
+                return;
+            }
+
+            cts.Cancel();
+
+            _ = pollingTask!.ContinueWith(_ => cts.Dispose(), CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }
+
+        /// <summary>
+        /// Runs a periodic loop that writes the forced-discharge registers every
+        /// <see cref="REMOTE_CONTROL_POLLING_INTERVAL"/> seconds until <paramref name="ct"/> is cancelled.
+        /// Individual write errors are logged and do not stop the loop.
+        /// </summary>
+        /// <param name="updates">The register updates to write on each tick.</param>
+        /// <param name="ct">Cancellation token used to stop the loop.</param>
+        private async Task PollForceDischargeAsync((FoxESSRegisters Register, short Value)[] updates, CancellationToken ct)
+        {
+            using PeriodicTimer timer = new(TimeSpan.FromSeconds(REMOTE_CONTROL_POLLING_INTERVAL));
+
+            try
+            {
+                while (await timer.WaitForNextTickAsync(ct))
+                {
+                    try
+                    {
+                        await WriteSingleRegisters(ct, updates);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error while refreshing forced discharge registers.");
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+            }
         }
 
         /// <summary>

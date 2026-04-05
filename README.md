@@ -4,7 +4,7 @@
 
 **AMD64**
 
-docker pull drosedev/rosessolarapi:2.3
+docker pull drosedev/rosessolarapi:2.4
 
 **Raspberry Pi**
 NOTE: Fox Cloud calls currently not working on the Pi image. Use the x64 image instead for now.
@@ -105,6 +105,18 @@ Disable Force Charge
 
 `POST http://dockerhost-ip:mappedport/FoxESS/Local/DisableForceCharge`
 
+Force discharge now (at 6000W default)
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/ForceDischarge`
+
+Force discharge now at a specific power
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/ForceDischarge?dischargePower=5000`
+
+Stop force discharge
+
+`POST http://dockerhost-ip:mappedport/FoxESS/Local/DisableForceDischarge`
+
 # Home Assistant
 ### configuration.yml
 ### Control of FOX ESS battery via Roses.SolarAPI
@@ -140,6 +152,20 @@ rest_command:
 
   fox_modbus_force_charge_stop:
     url: http://192.168.0.5:8200/FoxESS/Local/DisableForceCharge
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
+
+  fox_modbus_force_discharge_now:
+    url: http://192.168.0.5:8200/FoxESS/Local/ForceDischarge?dischargePower=5000
+    method: POST
+    headers:
+      accept: "application/json"
+      user-agent: 'Mozilla/5.0 {{ useragent }}'
+
+  fox_modbus_force_discharge_stop:
+    url: http://192.168.0.5:8200/FoxESS/Local/DisableForceDischarge
     method: POST
     headers:
       accept: "application/json"
